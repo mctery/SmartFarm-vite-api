@@ -1,9 +1,9 @@
-const express = require('express')
-const { createSensorDataValue, getSensorData } = require('../controllers/sensorDataController')
+const express = require('express');
+const { createSensorDataValue, getSensorData } = require('../controllers/sensorDataController');
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/find', getSensorData)
-router.post('/create', createSensorDataValue)
+router.route('/find').post(getSensorData);
+router.route('/create').post(createSensorDataValue);
 
-module.exports = router
+module.exports = router;

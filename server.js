@@ -157,7 +157,6 @@ client.on("message", async function (topic, message) {
     console.error(error);
   }
 });
-
 process.on("SIGINT", async () => {
   try {
     await mongoClient.close();

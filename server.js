@@ -36,6 +36,8 @@ app.get('/blog', (req, res) => {
 });
 
 app.use(errorMiddleware);
+
+// mongoose configuration
 mongoose.set('strictQuery', false);
 
 const mongoClient = new MongoClient(MONGO_URL);

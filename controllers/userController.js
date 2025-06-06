@@ -72,8 +72,10 @@ const updateUser = asyncHandler(async(req, res) => {
     try {
         const { id } = req.params
         const info = req.body
-        const hashedPassword = await bcrypt.hash(info.password, 10)
-        info.password = hashedPassword
+        if (info.password) {
+            const hashedPassword = await bcrypt.hash(info.password, 10)
+            info.password = hashedPassword
+        }
         const user = await User.findByIdAndUpdate(id, info)
         // we cannot find any product in database
         if(!user){

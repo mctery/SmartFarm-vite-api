@@ -8,7 +8,6 @@ const getSensorWidget = asyncHandler(async(req, res) =>{
         res.status(200).json(result);
     } catch (error) {
         res.status(500);
-        console.error(error.message)
         throw new Error(error.message);
     }
 })
@@ -19,7 +18,6 @@ const createSensorWidget = asyncHandler(async(req, res) => {
         res.status(200).json(result);
     } catch (error) {
         res.status(500);
-        console.error(error.message)
         throw new Error(error.message);
     }
 })
@@ -27,7 +25,6 @@ const createSensorWidget = asyncHandler(async(req, res) => {
 const updateSensorWidget = asyncHandler(async(req, res) => {
     try {
         const { device_id } = req.params
-        const updatedWidget = await SensorWidget.findOneAndUpdate(
             { device_id },
             { widget_json: JSON.stringify(req.body) },
             { new: true }
@@ -41,7 +38,7 @@ const updateSensorWidget = asyncHandler(async(req, res) => {
         
     } catch (error) {
         res.status(500);
-        console.error(error.message)
+        console.error(error.message);
         throw new Error(error.message);
     }
 })
@@ -57,7 +54,6 @@ const deleteSensorWidget = asyncHandler(async(req, res) =>{
         res.status(200).json(result);
     } catch (error) {
         res.status(500);
-        console.error(error.message)
         throw new Error(error.message);
     }
 })

@@ -49,8 +49,6 @@ client.on("connect", function () {
 });
 
 io.on("connection", (socket) => {
-    console.log("ผู้ใช้เชื่อมต่อกับเซิร์ฟเวอร์ Socket.IO");
-
   // เมื่อผู้ใช้ตัดการเชื่อมต่อ
   socket.on("disconnect", () => {
     console.log("ผู้ใช้ตัดการเชื่อมต่อกับเซิร์ฟเวอร์ Socket.IO");

@@ -50,20 +50,29 @@ app.get("/blog", (req, res) => {
 app.use(errorMiddleware);
 
 mongoose.set("strictQuery", false);
-mongoose
-  .connect(MONGO_URL)
-  .then(() => {
+
+const { MongoClient } = require("mongodb");
+const mongoClient = new MongoClient(MONGO_URL);
+
+async function startServer() {
+  try {
+    await mongoose.connect(MONGO_URL);
     console.log("connected to MongoDB");
+
+    await mongoClient.connect();
+    console.log("Mongo client connected");
+
     app.listen(PORT, () => {
       console.log(`Node API app is running on port ${PORT}`);
     });
-  })
-  .catch((error) => {
+  } catch (error) {
     console.log(error);
-  });
+  }
+}
+
+startServer();
 
 const mqtt = require("mqtt");
-const { MongoClient } = require("mongodb");
 
 const mongoClient = new MongoClient(MONGO_URL);
 let sensorsCollection;
@@ -142,11 +151,6 @@ client.on("message", async function (topic, message) {
             last_updated: new Date(),
           };
 
-          if (!sensorsCollection) {
-            console.error("Sensors collection not initialized");
-            return;
-          }
-
           const filter = {
             device_id: deviceID,
             sensor_type: dataType,
@@ -161,11 +165,27 @@ client.on("message", async function (topic, message) {
           };
 
           const options = { upsert: true };
-          await sensorsCollection.updateOne(filter, updateDoc, options);
         }
       }
     }
   } catch (error) {
     console.error(error);
+  }
+});
+process.on("SIGINT", async () => {
+  try {
+    await mongoClient.close();
+    console.log("Mongo client disconnected");
+  } finally {
+    process.exit(0);
+  }
+});
+
+process.on("SIGTERM", async () => {
+  try {
+    await mongoClient.close();
+    console.log("Mongo client disconnected");
+  } finally {
+    process.exit(0);
   }
 });

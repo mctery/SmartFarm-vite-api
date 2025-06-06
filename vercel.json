@@ -5,13 +5,5 @@
   ],
   "routes": [
     { "src": "/(.*)", "dest": "server.js" }
-  ],
-  "env": {
-    "PORT": "3000",
-    "MONGO_URL": "@mongo-url",
-    "MQTT_URL": "@mqtt-url",
-    "FRONTEND": "@frontend",
-    "TOKEN_KEY": "@token-key",
-    "OPEN_WEATHER_KEY": "@open-weather-key"
-  }
+  ]
 }

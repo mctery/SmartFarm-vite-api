@@ -1,5 +1,5 @@
-const Device = require('../models/device.model')
-const SensorWidget = require('../models/sensorWidget')
+const Device = require('../models/deviceModel')
+const SensorWidget = require('../models/sensorWidgetModel')
 const asyncHandler = require('express-async-handler')
 
 // get all product
@@ -72,7 +72,6 @@ const updateDevice = asyncHandler(async(req, res) => {
 const deleteDevice = asyncHandler(async(req, res) =>{
     try {
         const { id } = req.params;
-        console.log(id)
         const device = await Device.findByIdAndUpdate(id, { status: 'D' });
         if(!device){
             res.status(404);

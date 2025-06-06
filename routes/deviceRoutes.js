@@ -1,5 +1,5 @@
 const express = require("express");
-const Device = require("../models/device.model");
+const Device = require("../models/deviceModel");
 const {
   getDevices,
   getDevice,
@@ -7,18 +7,13 @@ const {
   createDevice,
   updateDevice,
   deleteDevice,
-} = require("../controllers/device.Controller");
+} = require("../controllers/deviceController");
 const { userCheckToken, verifyToken } = require("../middleware/authorization");
 
 const router = express.Router();
 
 //Verify
 router.use((req, res, next) => {
-  // const pathname = req.path
-  // console.log(pathname)
-  // if(pathname == '/login' || pathname == '/register' || pathname == '/token') {
-  //     return next()
-  // }
   verifyToken(req, res, next);
 });
 

@@ -1,4 +1,4 @@
-const SensorWidget = require('../models/sensorWidget')
+const SensorWidget = require('../models/sensorWidgetModel')
 const asyncHandler = require('express-async-handler')
 
 const getSensorWidget = asyncHandler(async(req, res) =>{
@@ -8,7 +8,7 @@ const getSensorWidget = asyncHandler(async(req, res) =>{
         res.status(200).json(result);
     } catch (error) {
         res.status(500);
-        console.log(error.message)
+        console.error(error.message)
         throw new Error(error.message);
     }
 })
@@ -19,7 +19,7 @@ const createSensorWidget = asyncHandler(async(req, res) => {
         res.status(200).json(result);
     } catch (error) {
         res.status(500);
-        console.log(error.message)
+        console.error(error.message)
         throw new Error(error.message);
     }
 })
@@ -27,22 +27,21 @@ const createSensorWidget = asyncHandler(async(req, res) => {
 const updateSensorWidget = asyncHandler(async(req, res) => {
     try {
         const { device_id } = req.params
-        const sanitizedBody = { ...req.body }
-        if (sanitizedBody.password) {
-            sanitizedBody.password = '[FILTERED]'
-        }
-        console.log(sanitizedBody)
-        const result = await SensorWidget.findOneAndUpdate({ device_id: device_id}, {widget_json : JSON.stringify(req.body)});
-        if(!result){
+        const updatedWidget = await SensorWidget.findOneAndUpdate(
+            { device_id },
+            { widget_json: JSON.stringify(req.body) },
+            { new: true }
+        );
+        if(!updatedWidget){
             res.status(404);
             throw new Error(`cannot find ID ${device_id}`);
         }
-        const find = await SensorWidget.findById(device_id);
-        res.status(200).json(find);
+        console.log(`Updated widget for device ${device_id}`);
+        res.status(200).json(updatedWidget);
         
     } catch (error) {
         res.status(500);
-        console.log(error.message)
+        console.error(error.message)
         throw new Error(error.message);
     }
 })
@@ -50,7 +49,6 @@ const updateSensorWidget = asyncHandler(async(req, res) => {
 const deleteSensorWidget = asyncHandler(async(req, res) =>{
     try {
         const { device_id } = req.params;
-        console.log(device_id)
         const result = await SensorWidget.findOneAndUpdate({ device_id: device_id}, { status: 'D' });
         if(!result){
             res.status(404);
@@ -59,7 +57,7 @@ const deleteSensorWidget = asyncHandler(async(req, res) =>{
         res.status(200).json(result);
     } catch (error) {
         res.status(500);
-        console.log(error.message)
+        console.error(error.message)
         throw new Error(error.message);
     }
 })

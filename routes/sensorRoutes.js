@@ -1,6 +1,6 @@
 const express = require('express');
-const Sensor = require('../models/sensor.model')
-const {getSensors, getSensor, createSensor, updateSensor, deleteSensor, getDeviceSensor} = require('../controllers/sensor.Controller')
+const Sensor = require('../models/sensorModel')
+const {getSensors, getSensor, createSensor, updateSensor, deleteSensor, getDeviceSensor} = require('../controllers/sensorController')
 
 const router = express.Router();
 

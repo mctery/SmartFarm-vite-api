@@ -1,5 +1,5 @@
 const express = require('express');
-const { getSensorWidget, createSensorWidget, updateSensorWidget, deleteSensorWidget } = require('../controllers/sensorWidget.Controller')
+const { getSensorWidget, createSensorWidget, updateSensorWidget, deleteSensorWidget } = require('../controllers/sensorWidgetController')
 
 const router = express.Router();
 

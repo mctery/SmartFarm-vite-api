@@ -1,12 +1,12 @@
 const express = require("express");
 const mongoose = require("mongoose");
 
-const UserRoute = require("./routes/userRoute");
-const deviceRoute = require("./routes/device.Route");
-const sensorRoute = require("./routes/sensor.Route");
-const sensorWidget = require("./routes/sensorWidget.Route");
-const sensorDataRoute = require("./routes/sensorData.Route");
-const weather = require("./routes/weather.Route");
+const userRoutes = require("./routes/userRoutes");
+const deviceRoutes = require("./routes/deviceRoutes");
+const sensorRoutes = require("./routes/sensorRoutes");
+const sensorWidgetRoutes = require("./routes/sensorWidgetRoutes");
+const sensorDataRoutes = require("./routes/sensorDataRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
 
 const errorMiddleware = require("./middleware/errorMiddleware");
 
@@ -31,12 +31,12 @@ app.use(express.urlencoded({ extended: false }));
 
 //routes
 
-app.use("/api/users", UserRoute);
-app.use("/api/devices", deviceRoute);
-app.use("/api/sensors", sensorRoute);
-app.use("/api/sensorWidget", sensorWidget);
-app.use("/api/sensorsdata", sensorDataRoute);
-app.use("/api/weather", weather);
+app.use("/api/users", userRoutes);
+app.use("/api/devices", deviceRoutes);
+app.use("/api/sensors", sensorRoutes);
+app.use("/api/sensorWidget", sensorWidgetRoutes);
+app.use("/api/sensorsdata", sensorDataRoutes);
+app.use("/api/weather", weatherRoutes);
 // app.use('/api/devices', deviceRoute);
 
 app.get("/", (req, res) => {
@@ -50,105 +50,97 @@ app.get("/blog", (req, res) => {
 app.use(errorMiddleware);
 
 mongoose.set("strictQuery", false);
-mongoose
-  .connect(MONGO_URL)
-  .then(() => {
+
+async function startServer() {
+  try {
+    await mongoose.connect(MONGO_URL);
+
+    await mongoClient.connect();
+    const db = mongoClient.db("smart_farm");
+    sensorsCollection = db.collection("sensors");
     console.log("connected to MongoDB");
+
     app.listen(PORT, () => {
       console.log(`Node API app is running on port ${PORT}`);
     });
-  })
-  .catch((error) => {
+
+    setupMqtt();
+  } catch (error) {
     console.log(error);
-  });
+  }
+}
 
 const mqtt = require("mqtt");
 const { MongoClient } = require("mongodb");
 
-const client = mqtt.connect(MQTT_URL, {
-  username: "",
-  password: "",
-  clientId: "mqttjs_" + Math.random().toString(16).substr(2, 8),
-  will: {
-    topic: "device/will",
-    payload: "device disconnected",
-    qos: 0,
-    retain: false,
-  },
+const mongoClient = new MongoClient(MONGO_URL);
+let sensorsCollection;
+
+process.on("SIGINT", async () => {
+  await mongoClient.close();
+  process.exit(0);
 });
 
-const topics = [
-  "device/+/temperature",
-  "device/+/humidity",
-  "device/+/light",
-  "device/+/soil",
-];
+function setupMqtt() {
+  const client = mqtt.connect(MQTT_URL, {
+    username: "",
+    password: "",
+    clientId: "mqttjs_" + Math.random().toString(16).substr(2, 8),
+    will: {
+      topic: "device/will",
+      payload: "device disconnected",
+      qos: 0,
+      retain: false,
+    },
+  });
 
-client.on("connect", function () {
-  console.log("mqtt client connected");
-  for (let index = 0; index < topics.length; index++) {
-    const topic = topics[index];
-    client.subscribe(topic, function (err) {
-      if (err) {
-        console.log(err);
-      }
+  const topics = [
+    "device/+/temperature",
+    "device/+/humidity",
+    "device/+/light",
+    "device/+/soil",
+  ];
+
+  client.on("connect", () => {
+    console.log("mqtt client connected");
+    client.subscribe(topics, (err) => {
+      if (err) console.error(err);
     });
-  }
-});
+  });
 
-client.on("message", async function (topic, message) {
+  client.on("message", handleMessage);
+}
+
+async function handleMessage(topic, message) {
   try {
-    let payload = JSON.parse(message.toString());
+    const payload = JSON.parse(message.toString());
+    if (!payload.device_id || !Array.isArray(payload.data)) return;
 
-    // console.log(payload)
-    if (payload.device_id && payload.data) {
-      let topics = topic.split("/");
-      let deviceID = payload.device_id;
-      let dataType = topics[2];
-      let version = payload.version;
+    const [, , dataType] = topic.split("/");
+    const deviceID = payload.device_id;
+    const version = payload.version;
 
-      if (payload.data) {
-        for (let i = 0; i < payload.data.length; i++) {
-          let dataPoint = payload.data[i];
-          let id = dataPoint.id;
-
-          let dataObject = {
-            device_id: deviceID,
-            sensor_type: dataType,
-            sensor_id: id,
-            version: version,
-            value: dataPoint.value,
-            last_updated: new Date(),
-          };
-
-          const dbName = "smart_farm";
-          const client = new MongoClient(MONGO_URL);
-          await client.connect();
-
-          const database = client.db(dbName);
-          const collectionName = `sensors`;
-          const collection = database.collection(collectionName);
-
-          const filter = {
-            device_id: deviceID,
-            sensor_type: dataType,
-            sensor_id: id,
-          };
-          const updateDoc = {
-            $set: {
-              version: version,
-              // "value": dataPoint.value,
-              last_updated: new Date(),
-            },
-          };
-
-          const options = { upsert: true };
-          await collection.updateOne(filter, updateDoc, options);
-          await client.close();
-        }
-      }
+    if (!sensorsCollection) {
+      console.error("Sensors collection not initialized");
+      return;
     }
+
+    await Promise.all(
+      payload.data.map((dataPoint) => {
+        const filter = {
+          device_id: deviceID,
+          sensor_type: dataType,
+          sensor_id: dataPoint.id,
+        };
+        const updateDoc = {
+          $set: { version, last_updated: new Date() },
+        };
+        return sensorsCollection.updateOne(filter, updateDoc, { upsert: true });
+      })
+    );
   } catch (error) {
     console.error(error);
   }
-});
+}
+
+startServer();

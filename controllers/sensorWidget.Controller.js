@@ -27,7 +27,11 @@ const createSensorWidget = asyncHandler(async(req, res) => {
 const updateSensorWidget = asyncHandler(async(req, res) => {
     try {
         const { device_id } = req.params
-        console.log(req.body)
+        const sanitizedBody = { ...req.body }
+        if (sanitizedBody.password) {
+            sanitizedBody.password = '[FILTERED]'
+        }
+        console.log(sanitizedBody)
         const result = await SensorWidget.findOneAndUpdate({ device_id: device_id}, {widget_json : JSON.stringify(req.body)});
         if(!result){
             res.status(404);

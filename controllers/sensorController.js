@@ -1,4 +1,4 @@
-const Sensor = require("../models/sensor.model");
+const Sensor = require("../models/sensorModel");
 const asyncHandler = require("express-async-handler");
 
 // get all product

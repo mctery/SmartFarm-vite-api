@@ -6,7 +6,7 @@ var mqtt = require("mqtt");
 
 const MQTT_URL = process.env.MQTT_URL;
 
-var client = mqtt.connect(MQTT_URL, {
+const mqttClient = mqtt.connect(MQTT_URL, {
   username: "",
   password: "",
   clientId: "mqttjs_" + Math.random().toString(16).substr(2, 8),
@@ -21,14 +21,14 @@ var client = mqtt.connect(MQTT_URL, {
 app.use(cors());
 app.use(express.json());
 
-let topics = ["device/+/notify", "device/+/checkin", "device/+/will"];
+const subscribeTopics = ["device/+/notify", "device/+/checkin", "device/+/will"];
 
-client.on("connect", function () {
+mqttClient.on("connect", function () {
   console.log("mqtt client connected");
-  for (let index = 0; index < topics.length; index++) {
-    const topic = topics[index];
+  for (let index = 0; index < subscribeTopics.length; index++) {
+    const topic = subscribeTopics[index];
     // console.log('subscribe: ', topic)
-    client.subscribe(topic, function (err) {
+    mqttClient.subscribe(topic, function (err) {
       if (err) {
         console.log(err);
       }
@@ -36,7 +36,7 @@ client.on("connect", function () {
   }
 });
 
-client.on("message", async function (topic, message) {
+mqttClient.on("message", async function (topic, message) {
   // message is Buffer
   try {
     console.log(message.toString());
@@ -48,16 +48,16 @@ client.on("message", async function (topic, message) {
       // flutter/906629f7c630/will
       // [flutter, 906629f7c630, will]
 
-      let topics = topic.split("/");
-      if (topics[2] === "checkin") {
+      const topicParts = topic.split("/");
+      if (topicParts[2] === "checkin") {
         console.log("online: ", payload);
         // DeviceService.updateOnline(payload)
       }
-      if (topics[2] === "will") {
+      if (topicParts[2] === "will") {
         console.log("offline: ", payload);
         // DeviceService.updateOffline(payload)
       }
-      if (topics[2] === "notify") {
+      if (topicParts[2] === "notify") {
         //  DeviceDataService.createOrUpdate(payload)
       }
     }

@@ -1,5 +1,5 @@
 const express = require("express");
-const Device = require("../models/device.model");
+const Device = require("../models/deviceModel");
 const {
   getDevices,
   getDevice,
@@ -7,7 +7,7 @@ const {
   createDevice,
   updateDevice,
   deleteDevice,
-} = require("../controllers/device.Controller");
+} = require("../controllers/deviceController");
 const { userCheckToken, verifyToken } = require("../middleware/authorization");
 
 const router = express.Router();

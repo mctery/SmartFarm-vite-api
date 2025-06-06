@@ -8,7 +8,9 @@ router.get('/', getSensors);
 
 router.get('/:id', getSensor);
 
-router.get('/device/type/:id/:type', getDeviceSensor);
+// Retrieve sensors by device id and sensor type. Optionally filter by version
+// when the version parameter is provided.
+router.get('/device/type/:id/:type/:version?', getDeviceSensor);
 
 router.post('/', createSensor);
 // update a product

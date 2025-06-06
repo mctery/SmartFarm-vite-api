@@ -74,6 +74,27 @@ startServer();
 
 const mqtt = require("mqtt");
 
+const mongoClient = new MongoClient(MONGO_URL);
+let sensorsCollection;
+
+async function initDb() {
+  try {
+    await mongoClient.connect();
+    const db = mongoClient.db("smart_farm");
+    sensorsCollection = db.collection("sensors");
+    console.log("MongoDB client ready for MQTT updates");
+  } catch (err) {
+    console.error("Failed to connect MongoDB for MQTT", err);
+  }
+}
+
+initDb();
+
+process.on("SIGINT", async () => {
+  await mongoClient.close();
+  process.exit(0);
+});
+
 const client = mqtt.connect(MQTT_URL, {
   username: "",
   password: "",
@@ -130,11 +151,6 @@ client.on("message", async function (topic, message) {
             last_updated: new Date(),
           };
 
-          const dbName = "smart_farm";
-          const database = mongoClient.db(dbName);
-          const collectionName = `sensors`;
-          const collection = database.collection(collectionName);
-
           const filter = {
             device_id: deviceID,
             sensor_type: dataType,
@@ -149,7 +165,6 @@ client.on("message", async function (topic, message) {
           };
 
           const options = { upsert: true };
-          await collection.updateOne(filter, updateDoc, options);
         }
       }
     }

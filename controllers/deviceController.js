@@ -72,7 +72,6 @@ const updateDevice = asyncHandler(async(req, res) => {
 const deleteDevice = asyncHandler(async(req, res) =>{
     try {
         const { id } = req.params;
-        console.log(id)
         const device = await Device.findByIdAndUpdate(id, { status: 'D' });
         if(!device){
             res.status(404);

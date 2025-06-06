@@ -14,11 +14,6 @@ const router = express.Router();
 
 //Verify
 router.use((req, res, next) => {
-  // const pathname = req.path
-  // console.log(pathname)
-  // if(pathname == '/login' || pathname == '/register' || pathname == '/token') {
-  //     return next()
-  // }
   verifyToken(req, res, next);
 });
 

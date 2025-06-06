@@ -27,7 +27,6 @@ mqttClient.on("connect", function () {
   console.log("mqtt client connected");
   for (let index = 0; index < subscribeTopics.length; index++) {
     const topic = subscribeTopics[index];
-    // console.log('subscribe: ', topic)
     mqttClient.subscribe(topic, function (err) {
       if (err) {
         console.log(err);
@@ -37,9 +36,7 @@ mqttClient.on("connect", function () {
 });
 
 mqttClient.on("message", async function (topic, message) {
-  // message is Buffer
   try {
-    console.log(message.toString());
     // console.log(topic.toString())
     let payload = JSON.parse(message.toString());
     if (payload.device_id) {

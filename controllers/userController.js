@@ -10,7 +10,7 @@ const login = asyncHandler(async(req, res) => {
         if (sanitizedBody.password) {
             sanitizedBody.password = '[FILTERED]'
         }
-        console.log(sanitizedBody)
+        console.log(`Login attempt for user: ${email}`)
         const result = await User.find({ email: email })
         if(result.length > 0) {
             const passwordMatch = await bcrypt.compare(
@@ -50,7 +50,7 @@ const createUser = asyncHandler(async(req, res) => {
         if (sanitizedBodyCreate.password) {
             sanitizedBodyCreate.password = '[FILTERED]'
         }
-        console.log(sanitizedBodyCreate)
+        console.log(`Registering user: ${info.email}`)
         const findUser = await User.find({ email: info.email })
         if(findUser.length > 0) {
             res.status(200).json({ message: 'ERROR', data: 'User is exists' })

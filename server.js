@@ -1,191 +1,128 @@
-const express = require("express");
-const mongoose = require("mongoose");
+const express = require('express');
+const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
+const mqtt = require('mqtt');
+const cors = require('cors');
+require('dotenv').config();
 
-const userRoutes = require("./routes/userRoutes");
-const deviceRoutes = require("./routes/deviceRoutes");
-const sensorRoutes = require("./routes/sensorRoutes");
-const sensorWidgetRoutes = require("./routes/sensorWidgetRoutes");
-const sensorDataRoutes = require("./routes/sensorDataRoutes");
-const weatherRoutes = require("./routes/weatherRoutes");
-
-const errorMiddleware = require("./middleware/errorMiddleware");
-
-let cors = require("cors");
-require("dotenv").config();
+const userRoutes = require('./routes/userRoutes');
+const deviceRoutes = require('./routes/deviceRoutes');
+const sensorRoutes = require('./routes/sensorRoutes');
+const sensorWidgetRoutes = require('./routes/sensorWidgetRoutes');
+const sensorDataRoutes = require('./routes/sensorDataRoutes');
+const weatherRoutes = require('./routes/weatherRoutes');
+const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
+const { PORT, MONGO_URL, FRONTEND, MQTT_URL } = process.env;
 
-const PORT = process.env.PORT;
-const MONGO_URL = process.env.MONGO_URL;
-const FRONTEND = process.env.FRONTEND;
-const MQTT_URL = process.env.MQTT_URL;
-
-let corsOptions = {
-  origin: FRONTEND,
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
-app.use(cors(corsOptions));
+app.use(cors({ origin: FRONTEND, optionsSuccessStatus: 200 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-//routes
+// routes
+app.use('/api/users', userRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/sensors', sensorRoutes);
+app.use('/api/sensorWidget', sensorWidgetRoutes);
+app.use('/api/sensorsdata', sensorDataRoutes);
+app.use('/api/weather', weatherRoutes);
 
-app.use("/api/users", userRoutes);
-app.use("/api/devices", deviceRoutes);
-app.use("/api/sensors", sensorRoutes);
-app.use("/api/sensorWidget", sensorWidgetRoutes);
-app.use("/api/sensorsdata", sensorDataRoutes);
-app.use("/api/weather", weatherRoutes);
-// app.use('/api/devices', deviceRoute);
-
-app.get("/", (req, res) => {
-  res.send("Hello NODE API");
+app.get('/', (req, res) => {
+  res.send('Hello NODE API');
 });
-
-app.get("/blog", (req, res) => {
-  res.send("Hello Blog, My name is Devtamin");
+app.get('/blog', (req, res) => {
+  res.send('Hello Blog, My name is Devtamin');
 });
 
 app.use(errorMiddleware);
-
-mongoose.set("strictQuery", false);
-
-const { MongoClient } = require("mongodb");
-const mongoClient = new MongoClient(MONGO_URL);
-
-async function startServer() {
-  try {
-    await mongoose.connect(MONGO_URL);
-    console.log("connected to MongoDB");
-
-    await mongoClient.connect();
-    console.log("Mongo client connected");
-
-    app.listen(PORT, () => {
-      console.log(`Node API app is running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-startServer();
-
-const mqtt = require("mqtt");
+mongoose.set('strictQuery', false);
 
 const mongoClient = new MongoClient(MONGO_URL);
 let sensorsCollection;
 
-async function initDb() {
-  try {
-    await mongoClient.connect();
-    const db = mongoClient.db("smart_farm");
-    sensorsCollection = db.collection("sensors");
-    console.log("MongoDB client ready for MQTT updates");
-  } catch (err) {
-    console.error("Failed to connect MongoDB for MQTT", err);
-  }
+async function connectDatabases() {
+  await mongoose.connect(MONGO_URL);
+  await mongoClient.connect();
+  sensorsCollection = mongoClient.db('smart_farm').collection('sensors');
+  console.log('Connected to MongoDB');
 }
 
-initDb();
-
-process.on("SIGINT", async () => {
-  await mongoClient.close();
-  process.exit(0);
-});
-
-const client = mqtt.connect(MQTT_URL, {
-  username: "",
-  password: "",
-  clientId: "mqttjs_" + Math.random().toString(16).substr(2, 8),
+const mqttClient = mqtt.connect(MQTT_URL, {
+  username: '',
+  password: '',
+  clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8),
   will: {
-    topic: "device/will",
-    payload: "device disconnected",
+    topic: 'device/will',
+    payload: 'device disconnected',
     qos: 0,
     retain: false,
   },
 });
 
 const topics = [
-  "device/+/temperature",
-  "device/+/humidity",
-  "device/+/light",
-  "device/+/soil",
+  'device/+/temperature',
+  'device/+/humidity',
+  'device/+/light',
+  'device/+/soil',
 ];
 
-client.on("connect", function () {
-  console.log("mqtt client connected");
-  for (let index = 0; index < topics.length; index++) {
-    const topic = topics[index];
-    client.subscribe(topic, function (err) {
-      if (err) {
-        console.log(err);
-      }
-    });
-  }
-});
+function setupMqtt() {
+  mqttClient.on('connect', () => {
+    console.log('mqtt client connected');
+    for (const topic of topics) {
+      mqttClient.subscribe(topic, err => err && console.log(err));
+    }
+  });
 
-client.on("message", async function (topic, message) {
-  try {
-    let payload = JSON.parse(message.toString());
+  mqttClient.on('message', async (topic, message) => {
+    try {
+      const payload = JSON.parse(message.toString());
+      if (!payload.device_id || !payload.data) return;
 
-    // console.log(payload)
-    if (payload.device_id && payload.data) {
-      let topics = topic.split("/");
-      let deviceID = payload.device_id;
-      let dataType = topics[2];
-      let version = payload.version;
+      const [, , dataType] = topic.split('/');
+      const { device_id: deviceID, version } = payload;
 
-      if (payload.data) {
-        for (let i = 0; i < payload.data.length; i++) {
-          let dataPoint = payload.data[i];
-          let id = dataPoint.id;
-
-          let dataObject = {
-            device_id: deviceID,
-            sensor_type: dataType,
-            sensor_id: id,
-            version: version,
+      for (const dataPoint of payload.data) {
+        const filter = {
+          device_id: deviceID,
+          sensor_type: dataType,
+          sensor_id: dataPoint.id,
+        };
+        const updateDoc = {
+          $set: {
+            version,
             value: dataPoint.value,
             last_updated: new Date(),
-          };
-
-          const filter = {
-            device_id: deviceID,
-            sensor_type: dataType,
-            sensor_id: id,
-          };
-          const updateDoc = {
-            $set: {
-              version: version,
-              // "value": dataPoint.value,
-              last_updated: new Date(),
-            },
-          };
-
-          const options = { upsert: true };
-        }
+          },
+        };
+        await sensorsCollection.updateOne(filter, updateDoc, { upsert: true });
       }
+    } catch (err) {
+      console.error(err);
     }
-  } catch (error) {
-    console.error(error);
-  }
-});
-process.on("SIGINT", async () => {
-  try {
-    await mongoClient.close();
-    console.log("Mongo client disconnected");
-  } finally {
-    process.exit(0);
-  }
-});
+  });
+}
 
-process.on("SIGTERM", async () => {
+async function start() {
   try {
-    await mongoClient.close();
-    console.log("Mongo client disconnected");
-  } finally {
-    process.exit(0);
+    await connectDatabases();
+    app.listen(PORT, () => {
+      console.log(`Node API app is running on port ${PORT}`);
+    });
+    setupMqtt();
+  } catch (err) {
+    console.error('Failed to start server', err);
+    process.exit(1);
   }
-});
+}
+
+async function shutdown() {
+  await mongoClient.close();
+  process.exit(0);
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+
+start();

@@ -6,7 +6,11 @@ const jwt = require('jsonwebtoken')
 const login = asyncHandler(async(req, res) => {
     try {
         const { email, password } = req.body
-        console.log(req.body)
+        const sanitizedBody = { ...req.body }
+        if (sanitizedBody.password) {
+            sanitizedBody.password = '[FILTERED]'
+        }
+        console.log(sanitizedBody)
         const result = await User.find({ email: email })
         if(result.length > 0) {
             const passwordMatch = await bcrypt.compare(
@@ -42,7 +46,11 @@ const login = asyncHandler(async(req, res) => {
 const createUser = asyncHandler(async(req, res) => {
     try {
         const info = req.body
-        console.log(req.body)
+        const sanitizedBodyCreate = { ...req.body }
+        if (sanitizedBodyCreate.password) {
+            sanitizedBodyCreate.password = '[FILTERED]'
+        }
+        console.log(sanitizedBodyCreate)
         const findUser = await User.find({ email: info.email })
         if(findUser.length > 0) {
             res.status(200).json({ message: 'ERROR', data: 'User is exists' })

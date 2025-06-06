@@ -1,7 +1,7 @@
 const axios = require('axios').default;
 const asyncHandler = require('express-async-handler');
 
-const apiKey = '61a7721545d33e17c99cb86a264ee6ad';
+const apiKey = process.env.OPEN_WEATHER_KEY;
 const weatherCache = {};
 
 const getWeatherNow = asyncHandler(async (req, res) => {

@@ -27,7 +27,11 @@ const getSensor = asyncHandler(async (req, res) => {
 const getDeviceSensor = asyncHandler(async (req, res) => {
   try {
     const { id, type, version } = req.params;
-    const sensor = await Sensor.find({ device_id: id, sensor_type: type });
+    const query = { device_id: id, sensor_type: type };
+    if (version) {
+      query.version = version;
+    }
+    const sensor = await Sensor.find(query);
     res.status(200).json(sensor);
   } catch (error) {
     res.status(500);

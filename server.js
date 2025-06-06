@@ -1,4 +1,4 @@
-import { inject } from "@vercel/analytics"
+const { inject } = require('@vercel/analytics');
 const express = require('express');
 const mongoose = require('mongoose');
 const { MongoClient } = require('mongodb');

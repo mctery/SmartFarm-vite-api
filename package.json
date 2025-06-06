@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "serve": "node server.js",
     "dev": "nodemon server.js",
     "start": "concurrently \"nodemon server.js\" \"node socketServer.js\""

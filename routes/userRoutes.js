@@ -5,10 +5,11 @@ const { userCheckToken, verifyToken } = require('../middleware/authorization')
 
 //Verify
 router.use((req, res, next) => {
-    const pathname = req.path
-        return next()
+    const pathname = req.path;
+    if(pathname == '/login' || pathname == '/register' || pathname == '/token') {
+        return next();
     }
-    verifyToken(req, res, next)
+    verifyToken(req, res, next);
 })
 
 router.post('/login', login)

@@ -1,10 +1,10 @@
-const SensorData = require('../models/sensorData.model')
+const SensorData = require('../models/sensorDataModel')
 const asyncHandler = require('express-async-handler')
 
 const getSensorData = asyncHandler(async(req, res) => {
     try {
-        const info = req.body
-        const sensors = await SensorData.find({ device_id: info.device_id, sensor: info.sensor })
+        const payload = req.body
+        const sensors = await SensorData.find({ device_id: payload.device_id, sensor: payload.sensor })
         res.status(200).json(sensors)
     } catch (error) {
         res.status(500)
@@ -14,12 +14,12 @@ const getSensorData = asyncHandler(async(req, res) => {
 
 const createSensorDataValue = asyncHandler(async(req, res) => {
     try {
-        const info = req.body
+        const payload = req.body
         let collection = []
-        if(info.device_id && info.dataset.length > 0) {
-            info.dataset.map(async (item, index) => {
+        if(payload.device_id && payload.dataset.length > 0) {
+            payload.dataset.map(async (item, index) => {
                 collection.push({
-                    device_id: info.device_id,
+                    device_id: payload.device_id,
                     sensor_id: item.id,
                     sensor: item.sensor,
                     value: item.value,

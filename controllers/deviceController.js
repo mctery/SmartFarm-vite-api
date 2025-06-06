@@ -1,5 +1,5 @@
-const Device = require('../models/device.model')
-const SensorWidget = require('../models/sensorWidget')
+const Device = require('../models/deviceModel')
+const SensorWidget = require('../models/sensorWidgetModel')
 const asyncHandler = require('express-async-handler')
 
 // get all product

@@ -1,4 +1,4 @@
-const SensorWidget = require('../models/sensorWidget')
+const SensorWidget = require('../models/sensorWidgetModel')
 const asyncHandler = require('express-async-handler')
 
 const getSensorWidget = asyncHandler(async(req, res) =>{

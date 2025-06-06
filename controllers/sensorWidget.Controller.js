@@ -28,13 +28,16 @@ const updateSensorWidget = asyncHandler(async(req, res) => {
     try {
         const { device_id } = req.params
         console.log(req.body)
-        const result = await SensorWidget.findOneAndUpdate({ device_id: device_id}, {widget_json : JSON.stringify(req.body)});
+        const result = await SensorWidget.findOneAndUpdate(
+            { device_id },
+            { widget_json: JSON.stringify(req.body) },
+            { new: true }
+        );
         if(!result){
             res.status(404);
             throw new Error(`cannot find ID ${device_id}`);
         }
-        const find = await SensorWidget.findById(device_id);
-        res.status(200).json(find);
+        res.status(200).json(result);
         
     } catch (error) {
         res.status(500);

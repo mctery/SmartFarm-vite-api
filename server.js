@@ -50,20 +50,29 @@ app.get("/blog", (req, res) => {
 app.use(errorMiddleware);
 
 mongoose.set("strictQuery", false);
-mongoose
-  .connect(MONGO_URL)
-  .then(() => {
+
+const { MongoClient } = require("mongodb");
+const mongoClient = new MongoClient(MONGO_URL);
+
+async function startServer() {
+  try {
+    await mongoose.connect(MONGO_URL);
     console.log("connected to MongoDB");
+
+    await mongoClient.connect();
+    console.log("Mongo client connected");
+
     app.listen(PORT, () => {
       console.log(`Node API app is running on port ${PORT}`);
     });
-  })
-  .catch((error) => {
+  } catch (error) {
     console.log(error);
-  });
+  }
+}
+
+startServer();
 
 const mqtt = require("mqtt");
-const { MongoClient } = require("mongodb");
 
 const client = mqtt.connect(MQTT_URL, {
   username: "",
@@ -122,10 +131,7 @@ client.on("message", async function (topic, message) {
           };
 
           const dbName = "smart_farm";
-          const client = new MongoClient(MONGO_URL);
-          await client.connect();
-
-          const database = client.db(dbName);
+          const database = mongoClient.db(dbName);
           const collectionName = `sensors`;
           const collection = database.collection(collectionName);
 
@@ -144,11 +150,27 @@ client.on("message", async function (topic, message) {
 
           const options = { upsert: true };
           await collection.updateOne(filter, updateDoc, options);
-          await client.close();
         }
       }
     }
   } catch (error) {
     console.error(error);
+  }
+});
+process.on("SIGINT", async () => {
+  try {
+    await mongoClient.close();
+    console.log("Mongo client disconnected");
+  } finally {
+    process.exit(0);
+  }
+});
+
+process.on("SIGTERM", async () => {
+  try {
+    await mongoClient.close();
+    console.log("Mongo client disconnected");
+  } finally {
+    process.exit(0);
   }
 });

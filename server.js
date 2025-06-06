@@ -1,12 +1,12 @@
 const express = require("express");
 const mongoose = require("mongoose");
 
-const UserRoute = require("./routes/userRoute");
-const deviceRoute = require("./routes/device.Route");
-const sensorRoute = require("./routes/sensor.Route");
-const sensorWidget = require("./routes/sensorWidget.Route");
-const sensorDataRoute = require("./routes/sensorData.Route");
-const weather = require("./routes/weather.Route");
+const userRoutes = require("./routes/userRoutes");
+const deviceRoutes = require("./routes/deviceRoutes");
+const sensorRoutes = require("./routes/sensorRoutes");
+const sensorWidgetRoutes = require("./routes/sensorWidgetRoutes");
+const sensorDataRoutes = require("./routes/sensorDataRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
 
 const errorMiddleware = require("./middleware/errorMiddleware");
 
@@ -31,12 +31,12 @@ app.use(express.urlencoded({ extended: false }));
 
 //routes
 
-app.use("/api/users", UserRoute);
-app.use("/api/devices", deviceRoute);
-app.use("/api/sensors", sensorRoute);
-app.use("/api/sensorWidget", sensorWidget);
-app.use("/api/sensorsdata", sensorDataRoute);
-app.use("/api/weather", weather);
+app.use("/api/users", userRoutes);
+app.use("/api/devices", deviceRoutes);
+app.use("/api/sensors", sensorRoutes);
+app.use("/api/sensorWidget", sensorWidgetRoutes);
+app.use("/api/sensorsdata", sensorDataRoutes);
+app.use("/api/weather", weatherRoutes);
 // app.use('/api/devices', deviceRoute);
 
 app.get("/", (req, res) => {
@@ -64,6 +64,27 @@ mongoose
 
 const mqtt = require("mqtt");
 const { MongoClient } = require("mongodb");
+
+const mongoClient = new MongoClient(MONGO_URL);
+let sensorsCollection;
+
+async function initDb() {
+  try {
+    await mongoClient.connect();
+    const db = mongoClient.db("smart_farm");
+    sensorsCollection = db.collection("sensors");
+    console.log("MongoDB client ready for MQTT updates");
+  } catch (err) {
+    console.error("Failed to connect MongoDB for MQTT", err);
+  }
+}
+
+initDb();
+
+process.on("SIGINT", async () => {
+  await mongoClient.close();
+  process.exit(0);
+});
 
 const client = mqtt.connect(MQTT_URL, {
   username: "",
@@ -121,13 +142,10 @@ client.on("message", async function (topic, message) {
             last_updated: new Date(),
           };
 
-          const dbName = "smart_farm";
-          const client = new MongoClient(MONGO_URL);
-          await client.connect();
-
-          const database = client.db(dbName);
-          const collectionName = `sensors`;
-          const collection = database.collection(collectionName);
+          if (!sensorsCollection) {
+            console.error("Sensors collection not initialized");
+            return;
+          }
 
           const filter = {
             device_id: deviceID,
@@ -143,8 +161,7 @@ client.on("message", async function (topic, message) {
           };
 
           const options = { upsert: true };
-          await collection.updateOne(filter, updateDoc, options);
-          await client.close();
+          await sensorsCollection.updateOne(filter, updateDoc, options);
         }
       }
     }

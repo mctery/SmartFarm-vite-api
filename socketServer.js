@@ -49,7 +49,7 @@ client.on("connect", function () {
 });
 
 io.on("connection", (socket) => {
-  console.log("ผู้ใช้เชื่อมต่อกับเซิร์ฟเวอร์ Socket.IO");
+    console.log("ผู้ใช้เชื่อมต่อกับเซิร์ฟเวอร์ Socket.IO");
 
   // เมื่อผู้ใช้ตัดการเชื่อมต่อ
   socket.on("disconnect", () => {
@@ -64,23 +64,15 @@ client.on("message", async function (topic, message) {
     if (payload.device_id) {
       let topics = topic.split("/");
       if (topics[2] === "temperature") {
-        console.log("temperature: ", payload);
-        // ส่งค่าไปยัง Socket.IO
         io.emit("temperatureData", payload);
       }
       if (topics[2] === "humidity") {
-        console.log("humidity: ", payload);
-        // ส่งค่าไปยัง Socket.IO
         io.emit("humidityData", payload);
       }
       if (topics[2] === "light") {
-        console.log("light: ", payload);
-        // ส่งค่าไปยัง Socket.IO
         io.emit("lightData", payload);
       }
       if (topics[2] === "soil") {
-        console.log("soil: ", payload);
-        // ส่งค่าไปยัง Socket.IO
         io.emit("soilData", payload);
       }
     }

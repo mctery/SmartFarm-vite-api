@@ -13,6 +13,24 @@ const getSensorData = asyncHandler(async(req, res) => {
     }
 })
 
+const getSensorDataRange = asyncHandler(async(req, res) => {
+    console.log('getSensorDataRange called');
+    try {
+        const { device_id, sensor, startDate, endDate } = req.body;
+        const query = { device_id, sensor };
+        if (startDate || endDate) {
+            query.createdAt = {};
+            if (startDate) query.createdAt.$gte = new Date(startDate);
+            if (endDate) query.createdAt.$lte = new Date(endDate);
+        }
+        const sensors = await SensorData.find(query);
+        res.status(200).json(sensors);
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+})
+
 const createSensorDataValue = asyncHandler(async(req, res) => {
     console.log('createSensorDataValue called');
     try {
@@ -41,5 +59,6 @@ const createSensorDataValue = asyncHandler(async(req, res) => {
 
 module.exports = {
     getSensorData,
-    createSensorDataValue
+    createSensorDataValue,
+    getSensorDataRange
 }

@@ -1,6 +1,15 @@
 const Device = require('../models/deviceModel')
 const SensorWidget = require('../models/sensorWidgetModel')
 const asyncHandler = require('express-async-handler')
+const mqtt = require('mqtt')
+
+let commandClient
+if (process.env.MQTT_URL && process.env.NODE_ENV !== 'test') {
+    commandClient = mqtt.connect(process.env.MQTT_URL)
+}
+function setCommandClient(client) {
+    commandClient = client
+}
 
 // get all product
 const getDevices = asyncHandler(async(req, res) => {
@@ -92,11 +101,31 @@ const deleteDevice = asyncHandler(async(req, res) =>{
     }
 })
 
+const sendDeviceCommand = asyncHandler(async(req, res) => {
+    console.log('sendDeviceCommand called');
+    try {
+        const { id } = req.params;
+        const { command, payload } = req.body;
+        if(!commandClient) {
+            res.status(500);
+            throw new Error('MQTT not configured');
+        }
+        const topic = `request/${id}/${command}`;
+        commandClient.publish(topic, JSON.stringify(payload || {}));
+        res.status(200).json({ message: 'OK' });
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+})
+
 module.exports = {
     getDevices,
     getDevice,
     getDeviceUser,
     createDevice,
     updateDevice,
-    deleteDevice
+    deleteDevice,
+    sendDeviceCommand,
+    setCommandClient
 }

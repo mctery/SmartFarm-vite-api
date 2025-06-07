@@ -6,6 +6,7 @@ const {
   createDevice,
   updateDevice,
   deleteDevice,
+  sendDeviceCommand,
 } = require("../controllers/deviceController");
 const { verifyToken } = require("../middleware/authorization");
 
@@ -25,5 +26,7 @@ router
   .get(getDevice)
   .put(updateDevice)
   .delete(deleteDevice);
+
+router.post('/:id/commands', sendDeviceCommand);
 
 module.exports = router;

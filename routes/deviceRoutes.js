@@ -1,5 +1,4 @@
 const express = require("express");
-const Device = require("../models/deviceModel");
 const {
   getDevices,
   getDevice,
@@ -8,25 +7,23 @@ const {
   updateDevice,
   deleteDevice,
 } = require("../controllers/deviceController");
-const { userCheckToken, verifyToken } = require("../middleware/authorization");
+const { verifyToken } = require("../middleware/authorization");
 
 const router = express.Router();
 
-//Verify
-router.use((req, res, next) => {
-  verifyToken(req, res, next);
-});
+router.use(verifyToken);
 
-router.get("/", getDevices);
-
-router.get("/:id", getDevice);
+router
+  .route("/")
+  .get(getDevices)
+  .post(createDevice);
 
 router.get("/user/:user_id", getDeviceUser);
 
-router.post("/", createDevice);
-// update a product
-router.put("/:id", updateDevice);
-// delete a product
-router.delete("/:id", deleteDevice);
+router
+  .route("/:id")
+  .get(getDevice)
+  .put(updateDevice)
+  .delete(deleteDevice);
 
 module.exports = router;

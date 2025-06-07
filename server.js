@@ -12,6 +12,7 @@ const sensorRoutes = require('./routes/sensorRoutes');
 const sensorWidgetRoutes = require('./routes/sensorWidgetRoutes');
 const sensorDataRoutes = require('./routes/sensorDataRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
+const menuRoutes = require('./routes/menuRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -28,6 +29,11 @@ app.use('/api/sensors', sensorRoutes);
 app.use('/api/sensorWidget', sensorWidgetRoutes);
 app.use('/api/sensorsdata', sensorDataRoutes);
 app.use('/api/weather', weatherRoutes);
+app.use('/api/menus', menuRoutes);
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 app.get('/', (req, res) => {
   res.send('Hello NODE API');

@@ -3,6 +3,33 @@ const asyncHandler = require('express-async-handler')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
+const getUsers = asyncHandler(async (req, res) => {
+    console.log('getUsers called');
+    try {
+        const users = await User.find({ status: 'A' });
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+})
+
+const getUser = asyncHandler(async (req, res) => {
+    console.log('getUser called');
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id);
+        if(!user){
+            res.status(404);
+            throw new Error(`cannot find any user with ID ${id}`);
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+})
+
 const login = asyncHandler(async(req, res) => {
     console.log('login called');
     try {
@@ -115,5 +142,7 @@ module.exports = {
     login,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getUsers,
+    getUser
 }

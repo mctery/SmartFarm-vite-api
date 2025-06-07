@@ -1,5 +1,12 @@
 const express = require('express');
-const { login, createUser, updateUser, deleteUser } = require('../controllers/userController');
+const {
+  login,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUsers,
+  getUser,
+} = require('../controllers/userController');
 const { userCheckToken, verifyToken } = require('../middleware/authorization');
 
 const router = express.Router();
@@ -15,8 +22,12 @@ router.post('/token', userCheckToken);
 
 router.route('/register').post(createUser);
 
+router.route('/')
+  .get(getUsers);
+
 router
   .route('/:id')
+  .get(getUser)
   .put(updateUser)
   .delete(deleteUser);
 

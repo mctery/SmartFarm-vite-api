@@ -5,6 +5,7 @@ const apiKey = process.env.OPEN_WEATHER_KEY;
 const weatherCache = {};
 
 const getWeatherNow = asyncHandler(async (req, res) => {
+  console.log('getWeatherNow called');
   try {
     const cityName = req.params.city
 
@@ -33,6 +34,7 @@ const getWeatherNow = asyncHandler(async (req, res) => {
 });
 
 const getWeatherNowAll = asyncHandler(async (req, res) => {
+    console.log('getWeatherNowAll called');
     try {
         res.status(200).json(weatherCache)
     } catch(error) {

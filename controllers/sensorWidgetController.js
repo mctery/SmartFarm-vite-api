@@ -2,6 +2,7 @@ const SensorWidget = require('../models/sensorWidgetModel')
 const asyncHandler = require('express-async-handler')
 
 const getSensorWidget = asyncHandler(async(req, res) =>{
+    console.log('getSensorWidget called');
     try {
         const { device_id } = req.params;
         const result = await SensorWidget.find({ device_id: device_id});
@@ -13,6 +14,7 @@ const getSensorWidget = asyncHandler(async(req, res) =>{
 })
 
 const createSensorWidget = asyncHandler(async(req, res) => {
+    console.log('createSensorWidget called');
     try {
         const result = await SensorWidget.create(req.body)
         res.status(200).json(result);
@@ -23,6 +25,7 @@ const createSensorWidget = asyncHandler(async(req, res) => {
 })
 
 const updateSensorWidget = asyncHandler(async(req, res) => {
+    console.log('updateSensorWidget called');
     try {
         const { device_id } = req.params
         const updatedWidget = await SensorWidget.findOneAndUpdate(
@@ -45,6 +48,7 @@ const updateSensorWidget = asyncHandler(async(req, res) => {
 })
 
 const deleteSensorWidget = asyncHandler(async(req, res) =>{
+    console.log('deleteSensorWidget called');
     try {
         const { device_id } = req.params;
         const result = await SensorWidget.findOneAndUpdate({ device_id: device_id}, { status: 'D' });

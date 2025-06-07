@@ -45,6 +45,7 @@ const mongoClient = new MongoClient(MONGO_URL);
 let sensorsCollection;
 
 async function connectDatabases() {
+  console.log('connectDatabases called');
   await mongoose.connect(MONGO_URL);
   await mongoClient.connect();
   sensorsCollection = mongoClient.db('smart_farm').collection('sensors');
@@ -71,6 +72,7 @@ const topics = [
 ];
 
 function setupMqtt() {
+  console.log('setupMqtt called');
   mqttClient.on('connect', () => {
     console.log('mqtt client connected');
     for (const topic of topics) {
@@ -108,6 +110,7 @@ function setupMqtt() {
 }
 
 async function start() {
+  console.log('start called');
   try {
     await connectDatabases();
     app.listen(PORT, () => {
@@ -121,6 +124,7 @@ async function start() {
 }
 
 async function shutdown() {
+  console.log('shutdown called');
   await mongoClient.close();
   process.exit(0);
 }

@@ -2,6 +2,7 @@ const SensorData = require('../models/sensorDataModel')
 const asyncHandler = require('express-async-handler')
 
 const getSensorData = asyncHandler(async(req, res) => {
+    console.log('getSensorData called');
     try {
         const payload = req.body
         const sensors = await SensorData.find({ device_id: payload.device_id, sensor: payload.sensor })
@@ -13,6 +14,7 @@ const getSensorData = asyncHandler(async(req, res) => {
 })
 
 const createSensorDataValue = asyncHandler(async(req, res) => {
+    console.log('createSensorDataValue called');
     try {
         const payload = req.body
         let collection = []

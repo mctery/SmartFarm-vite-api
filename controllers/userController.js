@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 const login = asyncHandler(async(req, res) => {
+    console.log('login called');
     try {
         const { email, password } = req.body
         const sanitizedBody = { ...req.body }
@@ -44,6 +45,7 @@ const login = asyncHandler(async(req, res) => {
 
 // create a product
 const createUser = asyncHandler(async(req, res) => {
+    console.log('createUser called');
     try {
         const info = req.body
         const sanitizedBodyCreate = { ...req.body }
@@ -69,6 +71,7 @@ const createUser = asyncHandler(async(req, res) => {
 
 // update a user
 const updateUser = asyncHandler(async(req, res) => {
+    console.log('updateUser called');
     try {
         const { id } = req.params
         const info = req.body
@@ -92,6 +95,7 @@ const updateUser = asyncHandler(async(req, res) => {
 })
 
 const deleteUser = asyncHandler(async(req, res) =>{
+    console.log('deleteUser called');
     try {
         const { id } = req.params
         const user = await User.findByIdAndUpdate(id, { status: 'D' })

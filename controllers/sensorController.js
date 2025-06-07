@@ -3,6 +3,7 @@ const asyncHandler = require("express-async-handler");
 
 // get all product
 const getSensors = asyncHandler(async (req, res) => {
+  console.log('getSensors called');
   try {
     const sensors = await Sensor.find({});
     res.status(200).json(sensors);
@@ -14,6 +15,7 @@ const getSensors = asyncHandler(async (req, res) => {
 
 // get a single product
 const getSensor = asyncHandler(async (req, res) => {
+  console.log('getSensor called');
   try {
     const { id } = req.params;
     const sensor = await Sensor.findById(id);
@@ -25,6 +27,7 @@ const getSensor = asyncHandler(async (req, res) => {
 });
 
 const getDeviceSensor = asyncHandler(async (req, res) => {
+  console.log('getDeviceSensor called');
   try {
     const { id, type, version } = req.params;
     const query = { device_id: id, sensor_type: type };
@@ -41,6 +44,7 @@ const getDeviceSensor = asyncHandler(async (req, res) => {
 
 // create a product
 const createSensor = asyncHandler(async (req, res) => {
+  console.log('createSensor called');
   try {
     const sensor = await Sensor.create(req.body);
     res.status(200).json(sensor);
@@ -52,6 +56,7 @@ const createSensor = asyncHandler(async (req, res) => {
 
 // update a product
 const updateSensor = asyncHandler(async (req, res) => {
+  console.log('updateSensor called');
   try {
     const { id } = req.params;
     const sensor = await Sensor.findByIdAndUpdate(id, req.body);
@@ -69,6 +74,7 @@ const updateSensor = asyncHandler(async (req, res) => {
 });
 
 const deleteSensor = asyncHandler(async (req, res) => {
+  console.log('deleteSensor called');
   try {
     const { id } = req.params;
     const sensor = await Sensor.findByIdAndDelete(id);

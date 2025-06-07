@@ -4,6 +4,7 @@ const asyncHandler = require('express-async-handler')
 
 // get all product
 const getDevices = asyncHandler(async(req, res) => {
+    console.log('getDevices called');
     try {
         const devices = await Device.find({ status: 'A' });
         res.status(200).json(devices);
@@ -15,6 +16,7 @@ const getDevices = asyncHandler(async(req, res) => {
 
 // get a single product
 const getDevice = asyncHandler(async(req, res) =>{
+    console.log('getDevice called');
     try {
         const {id} = req.params;
         const device = await Device.findById(id);
@@ -26,6 +28,7 @@ const getDevice = asyncHandler(async(req, res) =>{
 })
 
 const getDeviceUser = asyncHandler(async(req, res) =>{
+    console.log('getDeviceUser called');
     try {
         const { user_id } = req.params;
         const device = await Device.find({ user_id: user_id, status: 'A' });
@@ -38,6 +41,7 @@ const getDeviceUser = asyncHandler(async(req, res) =>{
 
 // create a product
 const createDevice = asyncHandler(async(req, res) => {
+    console.log('createDevice called');
     try {
         req.body.status = 'A'
         const device = await Device.create(req.body)
@@ -52,6 +56,7 @@ const createDevice = asyncHandler(async(req, res) => {
 
 // update a product
 const updateDevice = asyncHandler(async(req, res) => {
+    console.log('updateDevice called');
     try {
         const {id} = req.params;
         const device = await Device.findByIdAndUpdate(id, req.body);
@@ -70,6 +75,7 @@ const updateDevice = asyncHandler(async(req, res) => {
 })
 
 const deleteDevice = asyncHandler(async(req, res) =>{
+    console.log('deleteDevice called');
     try {
         const { id } = req.params;
         const device = await Device.findByIdAndUpdate(id, { status: 'D' });

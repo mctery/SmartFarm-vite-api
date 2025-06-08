@@ -16,7 +16,7 @@ const getDevices = asyncHandler(async(req, res) => {
     console.log('getDevices called');
     try {
         const devices = await Device.find({ status: 'A' });
-        res.status(200).json(devices);
+        res.status(200).json({ message: 'OK', data: devices });
     } catch (error) {
         res.status(500);
         throw new Error(error.message);
@@ -29,7 +29,7 @@ const getDevice = asyncHandler(async(req, res) =>{
     try {
         const {id} = req.params;
         const device = await Device.findById(id);
-        res.status(200).json(device);
+        res.status(200).json({ message: 'OK', data: device });
     } catch (error) {
         res.status(500);
         throw new Error(error.message);
@@ -41,7 +41,7 @@ const getDeviceUser = asyncHandler(async(req, res) =>{
     try {
         const { user_id } = req.params;
         const device = await Device.find({ user_id: user_id, status: 'A' });
-        res.status(200).json(device);
+        res.status(200).json({ message: 'OK', data: device });
     } catch (error) {
         res.status(500);
         throw new Error(error.message);
@@ -55,7 +55,7 @@ const createDevice = asyncHandler(async(req, res) => {
         req.body.status = 'A'
         const device = await Device.create(req.body)
         await SensorWidget.create({ device_id: req.body.device_id })
-        res.status(200).json(device);
+        res.status(200).json({ message: 'OK', data: device });
         
     } catch (error) {
         res.status(500);
@@ -75,7 +75,7 @@ const updateDevice = asyncHandler(async(req, res) => {
             throw new Error(`cannot find any product with ID ${id}`);
         }
         const updatedDevice = await Device.findById(id);
-        res.status(200).json(updatedDevice);
+        res.status(200).json({ message: 'OK', data: updatedDevice });
         
     } catch (error) {
         res.status(500);
@@ -93,7 +93,7 @@ const deleteDevice = asyncHandler(async(req, res) =>{
             throw new Error(`cannot find any product with ID ${id}`);
         }
 
-        res.status(200).json(device);
+        res.status(200).json({ message: 'OK', data: device });
         
     } catch (error) {
         res.status(500);

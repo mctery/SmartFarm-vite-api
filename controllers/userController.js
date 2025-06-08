@@ -7,7 +7,7 @@ const getUsers = asyncHandler(async (req, res) => {
     console.log('getUsers called');
     try {
         const users = await User.find({ status: 'A' });
-        res.status(200).json(users);
+        res.status(200).json({ message: 'OK', data: users });
     } catch (error) {
         res.status(500);
         throw new Error(error.message);
@@ -23,7 +23,7 @@ const getUser = asyncHandler(async (req, res) => {
             res.status(404);
             throw new Error(`cannot find any user with ID ${id}`);
         }
-        res.status(200).json(user);
+        res.status(200).json({ message: 'OK', data: user });
     } catch (error) {
         res.status(500);
         throw new Error(error.message);
@@ -113,7 +113,7 @@ const updateUser = asyncHandler(async(req, res) => {
             throw new Error(`cannot find any product with ID ${id}`)
         }
         const updatedUser = await User.findById(id)
-        res.status(200).json(updatedUser)
+        res.status(200).json({ message: 'OK', data: updatedUser })
         
     } catch (error) {
         res.status(500)
@@ -130,7 +130,7 @@ const deleteUser = asyncHandler(async(req, res) =>{
             res.status(404)
             throw new Error(`cannot find any product with ID ${id}`)
         }
-        res.status(200).json(user)
+        res.status(200).json({ message: 'OK', data: user })
         
     } catch (error) {
         res.status(500)

@@ -22,7 +22,7 @@ const userSchema = mongoose.Schema(
             type: String,
             required: true
         },
-        use_id: {
+        user_id: {
             type: String,
             default: function() {
                 return this._id

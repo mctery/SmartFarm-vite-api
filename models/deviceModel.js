@@ -1,47 +1,42 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const deviceSchema = mongoose.Schema(
   {
-    // user_id: {
-    //   type: Number, // or mongoose.Schema.Types.Number
-    //   required: true,
-    // },
     device_id: {
       type: String,
       required: true,
+      unique: true
     },
     name: {
       type: String,
       required: true,
     },
-    user_id: {
-      type: String,
-      required: true
-    },
     status: {
       type: String,
       required: true,
     },
-    // online_status: {
-    //   type: Boolean,
-    //   required: true,
-    // },
-    // image: {
-    //   type: String,
-    //   required: false,
-    // },
+    image: {
+      type: String,
+      required: false,
+      default: '',
+    },
+    online_status: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    user_id: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const Device = mongoose.model('Device', deviceSchema);
-
+const Device = mongoose.model("Device", deviceSchema);
 module.exports = Device;
-
-
-
 
 // {
 //   "user_id": 123,

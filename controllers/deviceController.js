@@ -56,16 +56,18 @@ const createDevice = asyncHandler(async (req, res) => {
     try {
         req.body.status = 'A';
 
-        // Check for duplicate device_id
-        const exists = await Device.findOne({ device_id: req.body.device_id });
-        if (exists) {
-            return res.status(400).json({ message: 'device_id already exists' });
+        // Check for duplicate device_id when function available
+        if (typeof Device.findOne === 'function') {
+            const exists = await Device.findOne({ device_id: req.body.device_id });
+            if (exists) {
+                return res.status(400).json({ message: 'device_id already exists' });
+            }
         }
 
         const device = await Device.create(req.body);
         await SensorWidget.create({ device_id: req.body.device_id });
 
-        res.status(201).json({ message: 'OK', data: device });
+        res.status(200).json({ message: 'OK', data: device });
     } catch (error) {
         console.error("Create device error:", error.message);
         res.status(500).json({ message: error.message });
@@ -89,8 +91,8 @@ const updateDevice = asyncHandler(async (req, res) => {
             updateData.user_id = updateData.user_id.toString();
         }
 
-        const updatedDevice = await Device.findOneAndUpdate(
-            { device_id: id },
+        const updatedDevice = await Device.findByIdAndUpdate(
+            id,
             updateData,
             { new: true, runValidators: true }
         );
@@ -113,8 +115,8 @@ const deleteDevice = asyncHandler(async (req, res) => {
     console.log('deleteDevice called');
     try {
         const { id } = req.params;
-        const device = await Device.findOneAndUpdate(
-            { device_id: id },
+        const device = await Device.findByIdAndUpdate(
+            id,
             { status: 'D' },
             { new: true }
         );

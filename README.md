@@ -6,11 +6,10 @@ Copy `.env.example` to `.env` and fill in your environment variables. The API no
 
 ## API Routes
 
-### `GET /api/sensors/device/type/:id/:type/:version?`
+### `GET /api/sensors/device/type/:id/:type`
 
-Retrieve sensor data for a device by sensor type. When the optional `version`
-parameter is supplied, the result will be filtered to sensors matching that
-version.
+Retrieve sensor data for a device by sensor type. Sensors are returned for the
+specified device and sensor type.
 
 ## Environment Variables
 
@@ -22,3 +21,8 @@ Create a `.env` file based on `.env.example` and provide values for:
 - `FRONTEND` - Allowed CORS origin.
 - `TOKEN_KEY` - JWT signing key.
 - `OPEN_WEATHER_KEY` - API key for OpenWeatherMap.
+
+## Seeding Sample Data
+
+Run `node scripts/seedSampleData.js` to populate all models with ten sample
+records for testing and development.

@@ -19,6 +19,10 @@ const getSensor = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const sensor = await Sensor.findById(id);
+    if (!sensor) {
+      res.status(404);
+      throw new Error(`cannot find ID ${id}`);
+    }
     res.status(200).json(sensor);
   } catch (error) {
     res.status(500);

@@ -42,9 +42,9 @@ async function run(){
   assert.strictEqual(FakeSensor.lastFindById,'s1');
   assert.strictEqual(res.statusCode,200);
 
-  req = {params:{id:'d1',type:'t1',version:'v1'}}; res = resMock();
+  req = {params:{id:'d1',type:'t1'}}; res = resMock();
   await getDeviceSensor(req,res);
-  assert.deepStrictEqual(FakeSensor.findCalls[1],{ device_id:'d1', sensor_type:'t1', version:'v1' });
+  assert.deepStrictEqual(FakeSensor.findCalls[1],{ device_id:'d1', sensor_type:'t1' });
 
   req = {body:{ foo:'bar' }}; res = resMock();
   await createSensor(req,res);

@@ -21,10 +21,6 @@ const sensorSchema = mongoose.Schema(
       type: String,
       require: false,
     },
-    version: {
-      type: String,
-      require: false,
-    },
     unit: {
       type: String,
       required: false,
@@ -52,45 +48,6 @@ const sensorSchema = mongoose.Schema(
 const Sensor = mongoose.model("Sensor", sensorSchema);
 
 module.exports = Sensor;
-
-// const mongoose = require('mongoose');
-
-// const sensorSchema = mongoose.Schema(
-//   {
-//     user_id: {
-//       type: Number, // or mongoose.Schema.Types.Number
-//       required: true,
-//     },
-//     device_id: {
-//       type: String,
-//       required: true,
-//     },
-//     name: {
-//       type: String,
-//       required: true,
-//     },
-//     status: {
-//       type: Boolean,
-//       required: true,
-//     },
-//     online_status: {
-//       type: Boolean,
-//       required: true,
-//     },
-//     image: {
-//       type: String,
-//       required: false,
-//     },
-//   },
-//   {
-//     timestamps: true,
-//   }
-// );
-
-// const Sensor = mongoose.model('Sensor', sensorSchema);
-
-// module.exports = Sensor;
-
 // {
 //   "user_id": 123,
 //   "device_id": "44c44e9ef0c7",

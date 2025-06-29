@@ -15,6 +15,11 @@ const deviceSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    version: {
+      type: String,
+      required: false,
+      default: '1.0',
+    },
     image: {
       type: String,
       required: false,
@@ -42,6 +47,7 @@ module.exports = Device;
 //   "user_id": 123,
 //   "device_id": "44c44e9ef0c7",
 //   "name": "My Device",
+//   "version": "1.0",
 //   "status": true,
 //   "online_status": true,
 //   "image": "device-image.jpg"

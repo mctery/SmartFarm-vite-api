@@ -1,9 +1,10 @@
 const express = require('express');
-const { getSensors, getSensor, createSensor, updateSensor, deleteSensor, getDeviceSensor } = require('../controllers/sensorController');
+const { getSensors, getSensor, getDeviceSensor, getDeviceSensorById, createSensor, updateSensor, deleteSensor } = require('../controllers/sensorController');
 
 const router = express.Router();
 
-router.get('/device/type/:id/:type/:version?', getDeviceSensor);
+router.get('/device/type/:id/:type', getDeviceSensor);
+router.get('/device/:id', getDeviceSensorById);
 
 router
   .route('/')

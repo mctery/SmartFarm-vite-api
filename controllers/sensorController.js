@@ -29,11 +29,21 @@ const getSensor = asyncHandler(async (req, res) => {
 const getDeviceSensor = asyncHandler(async (req, res) => {
   console.log('getDeviceSensor called');
   try {
-    const { id, type, version } = req.params;
+    const { id, type } = req.params;
     const query = { device_id: id, sensor_type: type };
-    if (version) {
-      query.version = version;
-    }
+    const sensor = await Sensor.find(query);
+    res.status(200).json(sensor);
+  } catch (error) {
+    res.status(500);
+    throw new Error(error.message);
+  }
+});
+
+const getDeviceSensorById = asyncHandler(async (req, res) => {
+  console.log('getDeviceSensorById called');
+  try {
+    const { id } = req.params;
+    const query = { device_id: id };
     const sensor = await Sensor.find(query);
     res.status(200).json(sensor);
   } catch (error) {
@@ -93,6 +103,7 @@ module.exports = {
   getSensors,
   getSensor,
   getDeviceSensor,
+  getDeviceSensorById,
   createSensor,
   updateSensor,
   deleteSensor,

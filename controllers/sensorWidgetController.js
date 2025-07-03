@@ -29,7 +29,7 @@ const updateSensorWidget = asyncHandler(async(req, res) => {
     try {
         const { device_id } = req.params
         const updatedWidget = await SensorWidget.findOneAndUpdate(
-            { device_id },
+            { device_id: device_id},
             { widget_json: JSON.stringify(req.body) },
             { new: true }
         );

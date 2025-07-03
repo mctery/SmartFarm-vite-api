@@ -19,8 +19,9 @@ const app = express();
 const { PORT, MONGO_URL, FRONTEND, MQTT_URL } = process.env;
 
 app.use(cors({ origin: FRONTEND, optionsSuccessStatus: 200 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 
 // routes
 app.use('/api/users', userRoutes);

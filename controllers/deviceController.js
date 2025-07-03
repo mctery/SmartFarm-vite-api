@@ -87,13 +87,11 @@ const updateDevice = asyncHandler(async (req, res) => {
         if (typeof updateData.status === 'boolean') {
             updateData.status = updateData.status ? 'A' : 'D';
         }
-        if (typeof updateData.user_id === 'number') {
+        if (typeof updateData.user_id === 'string') {
             updateData.user_id = updateData.user_id.toString();
         }
 
-        const updatedDevice = await Device.findByIdAndUpdate(
-            id,
-            updateData,
+        const updatedDevice = await Device.findByIdAndUpdate(id, updateData,
             { new: true, runValidators: true }
         );
 

@@ -8,10 +8,10 @@ const FakeModel = {
   async create(data){ this.created=data; return data; }
 };
 
-const modelPath = path.join(__dirname,'..','models','sensorDataModel.js');
+const modelPath = path.join(__dirname,'..','src/models','sensorDataModel.js');
 require.cache[modelPath] = { exports: FakeModel };
 
-const { getSensorData, createSensorDataValue } = require('../controllers/sensorDataController');
+const { getSensorData, createSensorDataValue } = require('../src/controllers/sensorDataController');
 
 function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 

@@ -8,12 +8,12 @@ const fakeMqtt = {
 const mqttPath = require.resolve('mqtt');
 require.cache[mqttPath] = { exports: fakeMqtt };
 
-const deviceModelPath = path.join(__dirname,'..','models','deviceModel.js');
+const deviceModelPath = path.join(__dirname,'..','src/models','deviceModel.js');
 require.cache[deviceModelPath] = { exports:{} };
-const widgetModelPath = path.join(__dirname,'..','models','sensorWidgetModel.js');
+const widgetModelPath = path.join(__dirname,'..','src/models','sensorWidgetModel.js');
 require.cache[widgetModelPath] = { exports:{} };
 
-const { sendDeviceCommand, setCommandClient } = require('../controllers/deviceController');
+const { sendDeviceCommand, setCommandClient } = require('../src/controllers/deviceController');
 
 function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 

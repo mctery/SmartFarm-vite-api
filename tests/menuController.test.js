@@ -9,10 +9,10 @@ const FakeMenu = {
   async findByIdAndUpdate(id, data){ this.updated = { id, data }; return { _id: id }; }
 };
 
-const modelPath = path.join(__dirname,'..','models','menuModel.js');
+const modelPath = path.join(__dirname,'..','src/models','menuModel.js');
 require.cache[modelPath] = { exports: FakeMenu };
 
-const { getMenus, getMenu, createMenu, updateMenu, deleteMenu } = require('../controllers/menuController');
+const { getMenus, getMenu, createMenu, updateMenu, deleteMenu } = require('../src/controllers/menuController');
 
 function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 

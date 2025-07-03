@@ -23,12 +23,12 @@ const bcrypt = {
 };
 
 // Patch require cache before loading controller
-const userModelPath = path.join(__dirname, '..', 'models', 'userModel.js');
+const userModelPath = path.join(__dirname, '..', 'src/models', 'userModel.js');
 require.cache[userModelPath] = { exports: FakeUser };
 const bcryptPath = require.resolve('bcrypt');
 require.cache[bcryptPath] = { exports: bcrypt };
 
-const { updateUser } = require('../controllers/userController');
+const { updateUser } = require('../src/controllers/userController');
 
 async function runUpdate(body) {
   const req = { params: { id: 'id1' }, body };

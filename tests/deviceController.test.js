@@ -14,8 +14,8 @@ const FakeSensorWidget = {
   async findOneAndUpdate(query, update) { this.updated = {query, update}; return { device_id: query.device_id }; },
 };
 
-const deviceModelPath = path.join(__dirname, '..', 'models', 'deviceModel.js');
-const widgetModelPath = path.join(__dirname, '..', 'models', 'sensorWidgetModel.js');
+const deviceModelPath = path.join(__dirname, '..', 'src/models', 'deviceModel.js');
+const widgetModelPath = path.join(__dirname, '..', 'src/models', 'sensorWidgetModel.js');
 require.cache[deviceModelPath] = { exports: FakeDevice };
 require.cache[widgetModelPath] = { exports: FakeSensorWidget };
 
@@ -26,7 +26,7 @@ const {
   createDevice,
   updateDevice,
   deleteDevice
-} = require('../controllers/deviceController');
+} = require('../src/controllers/deviceController');
 
 function mockRes() {
   return {

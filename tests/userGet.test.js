@@ -6,10 +6,10 @@ const FakeUser = {
   async findById(id){ FakeUser.lastFindById = id; return { _id:id }; }
 };
 
-const userModelPath = path.join(__dirname,'..','models','userModel.js');
+const userModelPath = path.join(__dirname,'..','src/models','userModel.js');
 require.cache[userModelPath] = { exports: FakeUser };
 
-const { getUsers, getUser } = require('../controllers/userController');
+const { getUsers, getUser } = require('../src/controllers/userController');
 
 function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 

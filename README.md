@@ -4,6 +4,22 @@ SmartFarm-webapp
 
 Copy `.env.example` to `.env` and fill in your environment variables. The API now expects `OPEN_WEATHER_KEY` for accessing OpenWeather.
 
+
+## Project Structure
+
+```
+src/
+├── app.js
+├── controllers/
+├── middleware/
+├── models/
+├── mqtt.js
+├── routes/
+├── scripts/
+└── socketServer.js
+tests/
+```
+
 ## API Routes
 
 ### `GET /api/sensors/device/type/:id/:type`

@@ -10,7 +10,7 @@ const FakeSensor = {
   async findByIdAndDelete(id){ this.deleted = id; return { _id:id }; },
 };
 
-const modelPath = path.join(__dirname,'..','models','sensorModel.js');
+const modelPath = path.join(__dirname,'..','src/models','sensorModel.js');
 require.cache[modelPath] = { exports: FakeSensor };
 
 const {
@@ -20,7 +20,7 @@ const {
   createSensor,
   updateSensor,
   deleteSensor
-} = require('../controllers/sensorController');
+} = require('../src/controllers/sensorController');
 
 function resMock(){
   return {

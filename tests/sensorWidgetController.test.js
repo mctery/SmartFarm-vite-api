@@ -8,10 +8,10 @@ const FakeModel = {
   async findOneAndUpdate(q,u){ this.updated={q,u}; return { device_id:q.device_id }; }
 };
 
-const modelPath = path.join(__dirname,'..','models','sensorWidgetModel.js');
+const modelPath = path.join(__dirname,'..','src/models','sensorWidgetModel.js');
 require.cache[modelPath] = { exports: FakeModel };
 
-const { getSensorWidget, createSensorWidget, updateSensorWidget, deleteSensorWidget } = require('../controllers/sensorWidgetController');
+const { getSensorWidget, createSensorWidget, updateSensorWidget, deleteSensorWidget } = require('../src/controllers/sensorWidgetController');
 
 function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 

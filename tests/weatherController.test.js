@@ -10,7 +10,7 @@ const axiosPath = require.resolve('axios');
 require.cache[axiosPath] = { exports: { default: fakeAxios } };
 process.env.OPEN_WEATHER_KEY = 'k';
 
-const { getWeatherNow, getWeatherNowAll } = require('../controllers/weatherController');
+const { getWeatherNow, getWeatherNowAll } = require('../src/controllers/weatherController');
 
 function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 

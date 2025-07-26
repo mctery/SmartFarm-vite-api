@@ -5,8 +5,11 @@ const {
   updateSensorWidget,
   deleteSensorWidget,
 } = require('../controllers/sensorWidgetController');
+const { verifyToken } = require("../middleware/authorization");
 
 const router = express.Router();
+
+router.use(verifyToken);
 
 router
   .route('/:device_id')

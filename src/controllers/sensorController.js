@@ -60,6 +60,7 @@ const getDeviceSensorById = asyncHandler(async (req, res) => {
 // create a product
 const createSensor = asyncHandler(async (req, res) => {
   console.log('createSensor called');
+  // console.log(req.body);
   try {
     const sensor = await Sensor.create(req.body);
     res.status(200).json(sensor);

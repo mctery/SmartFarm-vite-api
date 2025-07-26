@@ -6,7 +6,7 @@ const {
   updateMenu,
   deleteMenu,
 } = require('../controllers/menuController');
-const { verifyToken } = require('../middleware/authorization');
+const { verifyToken } = require("../middleware/authorization");
 
 const router = express.Router();
 

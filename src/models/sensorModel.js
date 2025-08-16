@@ -13,6 +13,10 @@ const sensorSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    sensor_name: {
+      type: String,
+      required: false,
+    },
     sensor_type: {
       type: String,
       required: true,
@@ -24,6 +28,11 @@ const sensorSchema = mongoose.Schema(
     unit: {
       type: String,
       required: false,
+    },
+    bgcolor: {
+      type: String,
+      required: false,
+      default: '#ecf0f1'
     },
     status: {
       type: Boolean,
@@ -48,11 +57,3 @@ const sensorSchema = mongoose.Schema(
 const Sensor = mongoose.model("Sensor", sensorSchema);
 
 module.exports = Sensor;
-// {
-//   "user_id": 123,
-//   "device_id": "44c44e9ef0c7",
-//   "name": "My Device",
-//   "status": true,
-//   "online_status": true,
-//   "image": "device-image.jpg"
-// }

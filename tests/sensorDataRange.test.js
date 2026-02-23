@@ -11,7 +11,7 @@ require.cache[modelPath] = { exports: FakeModel };
 
 const { getSensorDataRange } = require('../src/controllers/sensorDataController');
 
-function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
+function resMock(){ return { statusCode:200,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 
 async function run(){
   const req = { body:{ device_id:'d1', sensor:'temp', startDate:'2020-01-01', endDate:'2020-01-02' } };

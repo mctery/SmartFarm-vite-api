@@ -1,45 +1,33 @@
 const axios = require('axios').default;
 const asyncHandler = require('express-async-handler');
+const { weatherCacheTTL } = require('../config');
 
 const apiKey = process.env.OPEN_WEATHER_KEY;
 const weatherCache = {};
 
 const getWeatherNow = asyncHandler(async (req, res) => {
   console.log('getWeatherNow called');
-  try {
-    const cityName = req.params.city
+  const cityName = req.params.city;
 
-    // Check if weather data for this city is in the cache
-    if (weatherCache[cityName]) {
-      
-      res.status(200).json({ old_data: weatherCache[cityName] });
-    } else {
-      const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}`;
-
-      // Fetch weather data from the API
-      const response = await axios.get(apiUrl);
-      const weatherData = response.data;
-      response.data['input_cityName'] = cityName
-      response.data['expire'] = weatherData.dt + 3600
-
-      // Store data in cache
-      weatherCache[cityName] = weatherData;
-
-      res.status(200).json({ new_data: weatherData });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+  // Check cache and expiry
+  const cached = weatherCache[cityName];
+  if (cached && Date.now() / 1000 < cached.expire) {
+    return res.json({ message: 'OK', data: cached, cached: true });
   }
+
+  const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${apiKey}`;
+  const response = await axios.get(apiUrl);
+  const weatherData = response.data;
+  weatherData.input_cityName = cityName;
+  weatherData.expire = Math.floor(Date.now() / 1000) + weatherCacheTTL;
+
+  weatherCache[cityName] = weatherData;
+  res.json({ message: 'OK', data: weatherData, cached: false });
 });
 
 const getWeatherNowAll = asyncHandler(async (req, res) => {
-    console.log('getWeatherNowAll called');
-    try {
-        res.status(200).json(weatherCache)
-    } catch(error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-})
+  console.log('getWeatherNowAll called');
+  res.json({ message: 'OK', data: weatherCache });
+});
 
 module.exports = { getWeatherNow, getWeatherNowAll };

@@ -15,7 +15,7 @@ require.cache[widgetModelPath] = { exports:{} };
 
 const { sendDeviceCommand, setCommandClient } = require('../src/controllers/deviceController');
 
-function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
+function resMock(){ return { statusCode:200,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 
 async function run(){
   process.env.MQTT_URL='mqtt://localhost';

@@ -14,9 +14,9 @@ router.use(verifyToken);
 router
   .route('/:device_id')
   .get(getSensorWidget)
+  .put(updateSensorWidget)
   .delete(deleteSensorWidget);
 
 router.post('/', createSensorWidget);
-router.post('/update/:device_id', updateSensorWidget);
 
 module.exports = router;

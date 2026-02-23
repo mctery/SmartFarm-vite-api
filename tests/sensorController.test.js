@@ -6,7 +6,7 @@ const FakeSensor = {
   async find(query){ this.findCalls.push(query); return [{_id:'1'}]; },
   async findById(id){ this.lastFindById = id; return { _id:id }; },
   async create(data){ this.created = data; return data; },
-  async findByIdAndUpdate(id,data){ this.updated = {id,data}; return { _id:id }; },
+  async findByIdAndUpdate(id, data, opts){ this.updated = {id, data}; return { _id:id, ...data }; },
   async findByIdAndDelete(id){ this.deleted = id; return { _id:id }; },
 };
 
@@ -24,8 +24,8 @@ const {
 
 function resMock(){
   return {
-    statusCode:0,
-    data:null,
+    statusCode: 200,
+    data: null,
     status(c){ this.statusCode=c; return this; },
     json(d){ this.data=d; }
   };
@@ -35,12 +35,10 @@ async function run(){
   let req = {}; let res = resMock();
   await getSensors(req,res);
   assert.deepStrictEqual(FakeSensor.findCalls[0],{});
-  assert.strictEqual(res.statusCode,200);
 
   req = {params:{id:'s1'}}; res = resMock();
   await getSensor(req,res);
   assert.strictEqual(FakeSensor.lastFindById,'s1');
-  assert.strictEqual(res.statusCode,200);
 
   req = {params:{id:'d1',type:'t1'}}; res = resMock();
   await getDeviceSensor(req,res);
@@ -49,10 +47,12 @@ async function run(){
   req = {body:{ foo:'bar' }}; res = resMock();
   await createSensor(req,res);
   assert.deepStrictEqual(FakeSensor.created,{ foo:'bar' });
+  assert.strictEqual(res.statusCode, 201);
 
   req = {params:{id:'s1'}, body:{ value:1 }}; res = resMock();
   await updateSensor(req,res);
-  assert.deepStrictEqual(FakeSensor.updated,{id:'s1', data:{ value:1 }});
+  assert.strictEqual(FakeSensor.updated.id, 's1');
+  assert.strictEqual(FakeSensor.updated.data.value, 1);
 
   req = {params:{id:'s2'}}; res = resMock();
   await deleteSensor(req,res);

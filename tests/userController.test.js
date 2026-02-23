@@ -3,8 +3,11 @@ const path = require('path');
 
 // Mock User model
 const FakeUser = {
-  async findByIdAndUpdate(id, info) {
+  async findByIdAndUpdate(id, info, opts) {
     FakeUser.lastUpdate = { id, info };
+    if (opts && opts.new) {
+      return { _id: id, ...info };
+    }
     return { _id: id };
   },
   async findById(id) {

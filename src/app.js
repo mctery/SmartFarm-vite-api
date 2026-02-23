@@ -1,11 +1,13 @@
-const { inject } = require('@vercel/analytics');
 const express = require('express');
 const mongoose = require('mongoose');
-const { MongoClient } = require('mongodb');
-const mqtt = require('mqtt');
 const cors = require('cors');
-require('dotenv').config();
+const config = require('./config');
+const { createMqttClient, subscribeSensorTopics } = require('./config/mqtt');
+const { handleSensorMessage } = require('./services/mqttHandler');
+const { setCommandClient } = require('./controllers/deviceController');
+const errorMiddleware = require('./middleware/errorMiddleware');
 
+// Routes
 const userRoutes = require('./routes/userRoutes');
 const deviceRoutes = require('./routes/deviceRoutes');
 const sensorRoutes = require('./routes/sensorRoutes');
@@ -13,17 +15,15 @@ const sensorWidgetRoutes = require('./routes/sensorWidgetRoutes');
 const sensorDataRoutes = require('./routes/sensorDataRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 const menuRoutes = require('./routes/menuRoutes');
-const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
-const { PORT, MONGO_URL, FRONTEND, MQTT_URL } = process.env;
 
-app.use(cors({ origin: FRONTEND, optionsSuccessStatus: 200 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// Middleware
+app.use(cors({ origin: config.corsOrigin, optionsSuccessStatus: 200 }));
+app.use(express.json({ limit: config.bodyLimit }));
+app.use(express.urlencoded({ limit: config.bodyLimit, extended: true }));
 
-
-// routes
+// API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/sensors', sensorRoutes);
@@ -36,103 +36,50 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.get('/', (req, res) => {
-  res.send('Hello NODE API');
-});
-app.get('/blog', (req, res) => {
-  res.send('Hello Blog, My name is Devtamin');
-});
-
+// Error handler (must be last)
 app.use(errorMiddleware);
 
-// mongoose configuration
+// Database
 mongoose.set('strictQuery', false);
 
-const mongoClient = new MongoClient(MONGO_URL);
-let sensorsCollection;
-
-async function connectDatabases() {
-  console.log('connectDatabases called');
-  await mongoose.connect(MONGO_URL);
-  await mongoClient.connect();
-  sensorsCollection = mongoClient.db('smart_farm').collection('sensors');
+async function connectDatabase() {
+  console.log('Connecting to MongoDB...');
+  await mongoose.connect(config.mongoUrl);
   console.log('Connected to MongoDB');
 }
 
-// const mqttClient = mqtt.connect(MQTT_URL, {
-//   username: '',
-//   password: '',
-//   clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8),
-//   will: {
-//     topic: 'device/will',
-//     payload: 'device disconnected',
-//     qos: 0,
-//     retain: false,
-//   },
-// });
+// MQTT
+function setupMqtt() {
+  console.log('Setting up MQTT...');
+  const mqttClient = createMqttClient();
+  setCommandClient(mqttClient);
 
-// const topics = [
-//   'device/+/temperature',
-//   'device/+/humidity',
-//   'device/+/light',
-//   'device/+/soil',
-// ];
+  mqttClient.on('connect', () => {
+    console.log('MQTT client connected');
+    subscribeSensorTopics(mqttClient);
+  });
 
-// function setupMqtt() {
-//   console.log('setupMqtt called');
-//   mqttClient.on('connect', () => {
-//     console.log('mqtt client connected');
-//     for (const topic of topics) {
-//       mqttClient.subscribe(topic, err => err && console.log(err));
-//     }
-//   });
+  mqttClient.on('message', handleSensorMessage);
+  return mqttClient;
+}
 
-//   mqttClient.on('message', async (topic, message) => {
-//     try {
-//       const payload = JSON.parse(message.toString());
-//       if (!payload.device_id || !payload.data) return;
-
-//       const [, , dataType] = topic.split('/');
-//       const { device_id: deviceID, version } = payload;
-
-//       for (const dataPoint of payload.data) {
-//         const filter = {
-//           device_id: deviceID,
-//           sensor_type: dataType,
-//           sensor_id: dataPoint.id,
-//         };
-//         const updateDoc = {
-//           $set: {
-//             version,
-//             value: dataPoint.value,
-//             last_updated: new Date(),
-//           },
-//         };
-//         await sensorsCollection.updateOne(filter, updateDoc, { upsert: true });
-//       }
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   });
-// }
-
+// Startup
 async function start() {
-  console.log('start called');
   try {
-    await connectDatabases();
-    app.listen(PORT, () => {
-      console.log(`Node API app is running on port ${PORT}`);
+    await connectDatabase();
+    app.listen(config.port, () => {
+      console.log(`Server running on port ${config.port}`);
     });
-    // setupMqtt();
+    setupMqtt();
   } catch (err) {
-    console.error('Failed to start server', err);
+    console.error('Failed to start server:', err);
     process.exit(1);
   }
 }
 
 async function shutdown() {
-  console.log('shutdown called');
-  await mongoClient.close();
+  console.log('Shutting down...');
+  await mongoose.disconnect();
   process.exit(0);
 }
 

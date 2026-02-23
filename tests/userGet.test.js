@@ -11,7 +11,7 @@ require.cache[userModelPath] = { exports: FakeUser };
 
 const { getUsers, getUser } = require('../src/controllers/userController');
 
-function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
+function resMock(){ return { statusCode:200,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 
 (async ()=>{
   let res=resMock();

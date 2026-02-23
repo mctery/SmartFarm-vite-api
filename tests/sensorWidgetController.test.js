@@ -5,7 +5,7 @@ const FakeModel = {
   findQuery:null,
   async find(q){ this.findQuery=q; return [{_id:'1'}]; },
   async create(d){ this.created=d; return d; },
-  async findOneAndUpdate(q,u){ this.updated={q,u}; return { device_id:q.device_id }; }
+  async findOneAndUpdate(q, u, opts){ this.updated={q, u}; return { device_id:q.device_id }; }
 };
 
 const modelPath = path.join(__dirname,'..','src/models','sensorWidgetModel.js');
@@ -13,7 +13,7 @@ require.cache[modelPath] = { exports: FakeModel };
 
 const { getSensorWidget, createSensorWidget, updateSensorWidget, deleteSensorWidget } = require('../src/controllers/sensorWidgetController');
 
-function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
+function resMock(){ return { statusCode:200,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 
 async function run(){
   let req={ params:{device_id:'d1'} }; let res=resMock();
@@ -23,6 +23,7 @@ async function run(){
   req={ body:{ foo:'bar' } }; res=resMock();
   await createSensorWidget(req,res);
   assert.deepStrictEqual(FakeModel.created,{ foo:'bar' });
+  assert.strictEqual(res.statusCode, 201);
 
   req={ params:{device_id:'d2'}, body:{ w:1 } }; res=resMock();
   await updateSensorWidget(req,res);

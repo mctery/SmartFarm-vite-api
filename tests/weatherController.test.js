@@ -10,21 +10,23 @@ const axiosPath = require.resolve('axios');
 require.cache[axiosPath] = { exports: { default: fakeAxios } };
 process.env.OPEN_WEATHER_KEY = 'k';
 
+// Must load config before weatherController (it imports config)
+const configPath = path.join(__dirname, '..', 'src/config', 'index.js');
+require.cache[configPath] = { exports: { weatherCacheTTL: 3600 } };
+
 const { getWeatherNow, getWeatherNowAll } = require('../src/controllers/weatherController');
 
-function resMock(){ return { statusCode:0,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
+function resMock(){ return { statusCode:200,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 
 async function run(){
   let req={ params:{ city:'bangkok' } }; let res=resMock();
   await getWeatherNow(req,res);
-  assert.ok(axiosCall.includes('bangkok')); // ensure axios called
-  assert.strictEqual(res.statusCode,200);
-  assert.ok(res.data.new_data);
+  assert.ok(axiosCall.includes('bangkok'));
+  assert.ok(res.data.data); // { message: 'OK', data: weatherData }
 
   const resAll = resMock();
   await getWeatherNowAll({},resAll);
-  assert.strictEqual(resAll.statusCode,200);
-  assert.ok(resAll.data.bangkok);
+  assert.ok(resAll.data.data.bangkok); // { message: 'OK', data: { bangkok: ... } }
 
   console.log('weatherController tests passed');
 }

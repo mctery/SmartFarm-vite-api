@@ -1,40 +1,37 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../config');
 
-async function userCheckToken(req, res) {
+function userCheckToken(req, res) {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(401).json({ message: 'ERROR', data: 'No token provided' });
+  }
+
   try {
-    let { token } = req.body;
-    if (token) {
-      const TOKEN_KEY = process.env.TOKEN_KEY;
-      jwt.verify(token, TOKEN_KEY, async (error, decodedToken) => {
-        if (error) {
-          return res.status(200).json({ message: "ERROR", data: error });
-        }
-        return res.status(200).json({ message: "OK", data: decodedToken });
-      });
-    } else {
-      return res.status(200).json({ message: "ERROR", data: "No token provided" });
-    }
+    const decoded = jwt.verify(token, jwtSecret);
+    return res.json({ message: 'OK', data: decoded });
   } catch (error) {
-    res.status(500).json({ message: "ERROR", data: error.message });
+    return res.status(401).json({ message: 'ERROR', data: 'Token verification failed' });
   }
 }
 
-async function verifyToken(req, res, next) {
+function verifyToken(req, res, next) {
+  let token = req.header('Authorization');
+  if (!token) {
+    return res.status(401).json({ message: 'ERROR', data: 'No token provided' });
+  }
+
+  // Strip Bearer prefix if present
+  if (token.startsWith('Bearer ')) {
+    token = token.slice(7);
+  }
+
   try {
-    const token = req.header("Authorization");
-    if (!token) {
-      return res.status(200).json({ message: "ERROR", data: "No token provided" });
-    }
-    const TOKEN_KEY = process.env.TOKEN_KEY;
-    jwt.verify(token, TOKEN_KEY, async (error, decodedToken) => {
-      if (error) {
-        return res.status(200).json({ message: "ERROR", data: "Token verification failed" });
-      }
-      req.User_name = decodedToken;
-      next();
-    });
+    const decoded = jwt.verify(token, jwtSecret);
+    req.User_name = decoded;
+    next();
   } catch (error) {
-    res.status(500).json({ message: "ERROR", data: error.message });
+    return res.status(401).json({ message: 'ERROR', data: 'Token verification failed' });
   }
 }
 

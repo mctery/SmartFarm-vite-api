@@ -3,6 +3,7 @@ const {
   createSensorDataValue,
   getSensorData,
   getSensorDataRange,
+  getAggregateSensorData,
 } = require("../controllers/sensorDataController");
 const { verifyToken } = require("../middleware/authorization");
 
@@ -13,5 +14,6 @@ router.use(verifyToken);
 router.route("/find").post(getSensorData);
 router.route("/range").post(getSensorDataRange);
 router.route("/create").post(createSensorDataValue);
+router.route("/aggregate").post(getAggregateSensorData);
 
 module.exports = router;

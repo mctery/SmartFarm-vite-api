@@ -1,34 +1,56 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const {
   login,
+  refreshToken,
   createUser,
   updateUser,
   deleteUser,
   getUsers,
   getUser,
+  getMe,
+  updateMe,
 } = require('../controllers/userController');
 const { userCheckToken, verifyToken } = require('../middleware/authorization');
+const { checkPermission } = require('../middleware/checkPermission');
+const validate = require('../middleware/validate');
+const {
+  registerSchema,
+  loginSchema,
+  updateUserSchema,
+  checkTokenSchema,
+  refreshTokenSchema,
+} = require('../validations/userValidation');
+const { authRateLimitMax, rateLimitWindowMs } = require('../config');
 
 const router = express.Router();
 
-router.use((req, res, next) => {
-  const openPaths = ['/login', '/register', '/token'];
-  if (openPaths.includes(req.path)) return next();
-  verifyToken(req, res, next);
+const authLimiter = rateLimit({
+  windowMs: rateLimitWindowMs,
+  max: authRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'ERROR', data: 'Too many authentication attempts, please try again later' },
 });
 
-router.post('/login', login);
-router.post('/token', userCheckToken);
+// Open routes (no token required)
+router.post('/login', authLimiter, validate(loginSchema), login);
+router.post('/refresh', validate(refreshTokenSchema), refreshToken);
+router.post('/token', validate(checkTokenSchema), userCheckToken);
+router.post('/register', authLimiter, validate(registerSchema), createUser);
 
-router.route('/register').post(createUser);
+// All routes below require authentication
+router.use(verifyToken);
 
-router.route('/')
-  .get(getUsers);
+router.route('/').get(getUsers);
+
+// Profile routes (current user from JWT)
+router.route('/me').get(getMe).put(validate(updateUserSchema), updateMe);
 
 router
   .route('/:id')
-  .get(getUser)
-  .put(updateUser)
-  .delete(deleteUser);
+  .get(checkPermission('users:read'), getUser)
+  .put(checkPermission('users:write'), validate(updateUserSchema), updateUser)
+  .delete(checkPermission('users:delete'), deleteUser);
 
 module.exports = router;

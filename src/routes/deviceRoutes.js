@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 const {
   getDevices,
   getDevice,
@@ -7,26 +7,40 @@ const {
   updateDevice,
   deleteDevice,
   sendDeviceCommand,
-} = require("../controllers/deviceController");
-const { verifyToken } = require("../middleware/authorization");
+} = require('../controllers/deviceController');
+const { verifyToken } = require('../middleware/authorization');
+const { checkPermission } = require('../middleware/checkPermission');
+const validate = require('../middleware/validate');
+const { checkDeviceOwnership } = require('../middleware/ownershipCheck');
+const {
+  createDeviceSchema,
+  updateDeviceSchema,
+  sendCommandSchema,
+} = require('../validations/deviceValidation');
 
 const router = express.Router();
 
 router.use(verifyToken);
 
 router
-  .route("/")
-  .get(getDevices)
-  .post(createDevice);
+  .route('/')
+  .get(checkPermission('devices:read'), getDevices)
+  .post(checkPermission('devices:write'), validate(createDeviceSchema), createDevice);
 
-router.get("/user/:user_id", getDeviceUser);
+router.get('/user/:user_id', checkPermission('devices:read'), getDeviceUser);
 
 router
-  .route("/:id")
-  .get(getDevice)
-  .put(updateDevice)
-  .delete(deleteDevice);
+  .route('/:id')
+  .get(checkPermission('devices:read'), getDevice)
+  .put(checkPermission('devices:write'), validate(updateDeviceSchema), updateDevice)
+  .delete(checkPermission('devices:delete'), deleteDevice);
 
-router.post('/:id/commands', sendDeviceCommand);
+router.post(
+  '/:id/commands',
+  checkPermission('devices:command'),
+  validate(sendCommandSchema),
+  checkDeviceOwnership('params'),
+  sendDeviceCommand
+);
 
 module.exports = router;

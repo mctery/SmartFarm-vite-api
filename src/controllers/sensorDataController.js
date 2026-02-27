@@ -1,15 +1,31 @@
 const SensorData = require('../models/sensorDataModel');
 const asyncHandler = require('express-async-handler');
+const logger = require('../config/logger');
 
 const getSensorData = asyncHandler(async (req, res) => {
-  console.log('getSensorData called');
-  const { device_id, sensor } = req.body;
-  const sensors = await SensorData.find({ device_id, sensor });
-  res.json(sensors);
+  logger.debug('getSensorData called');
+  const { device_id, sensor, page, limit } = req.body;
+  const query = { device_id, sensor };
+
+  if (page > 0 && limit > 0) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      SensorData.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      SensorData.countDocuments(query),
+    ]);
+    return res.json({
+      message: 'OK',
+      data,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  }
+
+  const sensors = await SensorData.find(query);
+  res.json({ message: 'OK', data: sensors });
 });
 
 const getSensorDataRange = asyncHandler(async (req, res) => {
-  console.log('getSensorDataRange called');
+  logger.debug('getSensorDataRange called');
   const { device_id, sensor, startDate, endDate } = req.body;
   const query = { device_id, sensor };
   if (startDate || endDate) {
@@ -17,12 +33,29 @@ const getSensorDataRange = asyncHandler(async (req, res) => {
     if (startDate) query.createdAt.$gte = new Date(startDate);
     if (endDate) query.createdAt.$lte = new Date(endDate);
   }
+
+  const pageNum = parseInt(req.body.page) || 0;
+  const limitNum = parseInt(req.body.limit) || 0;
+
+  if (pageNum > 0 && limitNum > 0) {
+    const skip = (pageNum - 1) * limitNum;
+    const [data, total] = await Promise.all([
+      SensorData.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      SensorData.countDocuments(query),
+    ]);
+    return res.json({
+      message: 'OK',
+      data,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    });
+  }
+
   const sensors = await SensorData.find(query);
-  res.json(sensors);
+  res.json({ message: 'OK', data: sensors });
 });
 
 const createSensorDataValue = asyncHandler(async (req, res) => {
-  console.log('createSensorDataValue called');
+  logger.debug('createSensorDataValue called');
   const { device_id, dataset } = req.body;
 
   if (!device_id || !dataset || dataset.length === 0) {
@@ -42,7 +75,7 @@ const createSensorDataValue = asyncHandler(async (req, res) => {
 });
 
 const getAggregateSensorData = asyncHandler(async (req, res) => {
-  console.log('getAggregateSensorData called');
+  logger.debug('getAggregateSensorData called');
   const { device_id, sensor, sensor_id, startDate, endDate, groupBy } = req.body;
 
   if (!device_id || !sensor) {

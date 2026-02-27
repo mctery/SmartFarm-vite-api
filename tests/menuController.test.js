@@ -3,16 +3,23 @@ const path = require('path');
 
 const FakeMenu = {
   findCalls: [],
-  async find(q){ this.findCalls.push(q); return [{ _id: '1' }]; },
+  async find(q){ this.findCalls.push(q); return [{ _id: '1', toObject(){ return { _id: '1', order: 0, parent_id: null }; } }]; },
   async findById(id){ this.lastFind = id; return { _id: id }; },
   async create(data){ this.created = data; return data; },
   async findByIdAndUpdate(id, data, opts){ this.updated = { id, data }; return { _id: id, ...data }; }
 };
 
-const modelPath = path.join(__dirname,'..','src/models','menuModel.js');
-require.cache[modelPath] = { exports: FakeMenu };
+const FakeUserMenu = {
+  async findOne(q){ return FakeUserMenu.result; },
+  result: null,
+};
 
-const { getMenus, getMenu, createMenu, updateMenu, deleteMenu } = require('../src/controllers/menuController');
+const modelPath = path.join(__dirname,'..','src/models','menuModel.js');
+const userMenuPath = path.join(__dirname,'..','src/models','userMenuModel.js');
+require.cache[modelPath] = { exports: FakeMenu };
+require.cache[userMenuPath] = { exports: FakeUserMenu };
+
+const { getMenus, getMenu, createMenu, updateMenu, deleteMenu, getAccessibleMenus } = require('../src/controllers/menuController');
 
 function resMock(){ return { statusCode:200,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }
 
@@ -38,6 +45,19 @@ async function run(){
   req={ params:{ id:'m3' } }; res=resMock();
   await deleteMenu(req,res);
   assert.strictEqual(FakeMenu.updated.id, 'm3');
+
+  // Test getAccessibleMenus for admin user
+  req={ User_name:{ role:'admin', userId:'u1' } }; res=resMock();
+  await getAccessibleMenus(req,res);
+  assert.strictEqual(res.data.message, 'OK');
+  assert(Array.isArray(res.data.data));
+
+  // Test getAccessibleMenus for regular user with no UserMenu
+  FakeUserMenu.result = null;
+  req={ User_name:{ role:'user', userId:'u2' } }; res=resMock();
+  await getAccessibleMenus(req,res);
+  assert.strictEqual(res.data.message, 'OK');
+  assert.deepStrictEqual(res.data.data, []);
 
   console.log('menuController tests passed');
 }

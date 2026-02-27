@@ -1,32 +1,45 @@
 const axios = require('axios').default;
 const asyncHandler = require('express-async-handler');
 const { weatherCacheTTL } = require('../config');
+const logger = require('../config/logger');
 
+const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
 const apiKey = process.env.OPEN_WEATHER_KEY;
 const weatherCache = {};
 
+// Clean expired cache entries periodically (every 10 minutes)
+setInterval(() => {
+  const now = Math.floor(Date.now() / 1000);
+  for (const key of Object.keys(weatherCache)) {
+    if (weatherCache[key].expire < now) {
+      delete weatherCache[key];
+    }
+  }
+}, 10 * 60 * 1000);
+
 const getWeatherNow = asyncHandler(async (req, res) => {
-  console.log('getWeatherNow called');
+  logger.debug('getWeatherNow called');
   const cityName = req.params.city;
 
   // Check cache and expiry
   const cached = weatherCache[cityName];
-  if (cached && Date.now() / 1000 < cached.expire) {
+  const now = Math.floor(Date.now() / 1000);
+  if (cached && now < cached.expire) {
     return res.json({ message: 'OK', data: cached, cached: true });
   }
 
-  const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${apiKey}`;
+  const apiUrl = `${WEATHER_API_URL}?q=${encodeURIComponent(cityName)}&appid=${apiKey}&units=metric&lang=th`;
   const response = await axios.get(apiUrl);
   const weatherData = response.data;
   weatherData.input_cityName = cityName;
-  weatherData.expire = Math.floor(Date.now() / 1000) + weatherCacheTTL;
+  weatherData.expire = now + weatherCacheTTL;
 
   weatherCache[cityName] = weatherData;
   res.json({ message: 'OK', data: weatherData, cached: false });
 });
 
 const getWeatherNowAll = asyncHandler(async (req, res) => {
-  console.log('getWeatherNowAll called');
+  logger.debug('getWeatherNowAll called');
   res.json({ message: 'OK', data: weatherCache });
 });
 

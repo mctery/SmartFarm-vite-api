@@ -9,6 +9,10 @@ const FakeModel = {
 const modelPath = path.join(__dirname,'..','src/models','sensorDataModel.js');
 require.cache[modelPath] = { exports: FakeModel };
 
+// Clear cached controller so it picks up our FakeModel
+const controllerPath = path.join(__dirname,'..','src/controllers','sensorDataController.js');
+delete require.cache[controllerPath];
+
 const { getSensorDataRange } = require('../src/controllers/sensorDataController');
 
 function resMock(){ return { statusCode:200,data:null,status(c){this.statusCode=c;return this;},json(d){this.data=d;} }; }

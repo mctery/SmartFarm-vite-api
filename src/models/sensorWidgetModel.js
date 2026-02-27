@@ -21,6 +21,8 @@ const sensorWidgetSchema = new mongoose.Schema(
     }
 );
 
+sensorWidgetSchema.index({ device_id: 1 });
+
 const SensorWidget = mongoose.model('SensorWidget', sensorWidgetSchema);
 
 module.exports = SensorWidget;

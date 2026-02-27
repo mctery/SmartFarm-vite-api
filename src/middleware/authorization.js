@@ -22,8 +22,9 @@ function verifyToken(req, res, next) {
   }
 
   // Strip Bearer prefix if present
-  if (token.startsWith('Bearer ')) {
-    token = token.slice(7);
+  const BEARER_PREFIX = 'Bearer ';
+  if (token.startsWith(BEARER_PREFIX)) {
+    token = token.slice(BEARER_PREFIX.length);
   }
 
   try {

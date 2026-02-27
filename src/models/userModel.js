@@ -23,6 +23,11 @@ const userSchema = mongoose.Schema(
             type: String,
             required: true
         },
+        role: {
+            type: String,
+            enum: ['admin', 'user'],
+            default: 'user'
+        },
         user_id: {
             type: String,
             default: function() {
@@ -34,6 +39,8 @@ const userSchema = mongoose.Schema(
         timestamps: true
     }
 )
+
+userSchema.index({ email: 1, status: 1 });
 
 const User = mongoose.model('User', userSchema);
 

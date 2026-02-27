@@ -30,6 +30,11 @@ const deviceSchema = mongoose.Schema(
       required: false,
       default: false,
     },
+    last_seen: {
+      type: Date,
+      required: false,
+      default: null,
+    },
     user_id: {
       type: String,
       required: true,
@@ -39,6 +44,8 @@ const deviceSchema = mongoose.Schema(
     timestamps: true,
   }
 );
+
+deviceSchema.index({ user_id: 1, status: 1 });
 
 const Device = mongoose.model("Device", deviceSchema);
 module.exports = Device;

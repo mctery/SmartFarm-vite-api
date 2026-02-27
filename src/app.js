@@ -1,10 +1,16 @@
+const http = require('http');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const config = require('./config');
+const logger = require('./config/logger');
+const requestLogger = require('./middleware/requestLogger');
 const { createMqttClient, subscribeSensorTopics } = require('./config/mqtt');
-const { handleSensorMessage } = require('./services/mqttHandler');
+const { handleSensorMessage, handleDeviceCheckin, handleDeviceWill } = require('./services/mqttHandler');
 const { setCommandClient } = require('./controllers/deviceController');
+const { initSocketIO } = require('./config/socketio');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 // Routes
@@ -15,13 +21,34 @@ const sensorWidgetRoutes = require('./routes/sensorWidgetRoutes');
 const sensorDataRoutes = require('./routes/sensorDataRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 const menuRoutes = require('./routes/menuRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const sensorThresholdRoutes = require('./routes/sensorThresholdRoutes');
+const deviceLogRoutes = require('./routes/deviceLogRoutes');
+const auditLogRoutes = require('./routes/auditLogRoutes');
+const userSettingRoutes = require('./routes/userSettingRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
+// Security headers
+app.use(helmet());
+
 // Middleware
 app.use(cors({ origin: config.corsOrigin, optionsSuccessStatus: 200 }));
+
+// Global rate limit
+const globalLimiter = rateLimit({
+  windowMs: config.rateLimitWindowMs,
+  max: config.rateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'ERROR', data: 'Too many requests, please try again later' },
+});
+app.use(globalLimiter);
+
 app.use(express.json({ limit: config.bodyLimit }));
 app.use(express.urlencoded({ limit: config.bodyLimit, extended: true }));
+app.use(requestLogger);
 
 // API Routes
 app.use('/api/users', userRoutes);
@@ -31,6 +58,12 @@ app.use('/api/sensorWidget', sensorWidgetRoutes);
 app.use('/api/sensorsdata', sensorDataRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/menus', menuRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/thresholds', sensorThresholdRoutes);
+app.use('/api/device-logs', deviceLogRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/settings', userSettingRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -43,42 +76,62 @@ app.use(errorMiddleware);
 mongoose.set('strictQuery', false);
 
 async function connectDatabase() {
-  console.log('Connecting to MongoDB...');
+  logger.info('Connecting to MongoDB...');
   await mongoose.connect(config.mongoUrl);
-  console.log('Connected to MongoDB');
+  logger.info('Connected to MongoDB');
 }
 
 // MQTT
 function setupMqtt() {
-  console.log('Setting up MQTT...');
+  logger.info('Setting up MQTT...');
   const mqttClient = createMqttClient();
   setCommandClient(mqttClient);
 
   mqttClient.on('connect', () => {
-    console.log('MQTT client connected');
+    logger.info('MQTT client connected');
     subscribeSensorTopics(mqttClient);
   });
 
-  mqttClient.on('message', handleSensorMessage);
+  mqttClient.on('message', (topic, message) => {
+    const parts = topic.split('/');
+    const msgType = parts[2]; // device/{id}/{type}
+    if (msgType === 'checkin') {
+      handleDeviceCheckin(topic, message);
+    } else if (msgType === 'will') {
+      handleDeviceWill(topic, message);
+    } else {
+      handleSensorMessage(topic, message);
+    }
+  });
+
+  mqttClient.on('error', (err) => {
+    logger.error('MQTT error in app', { error: err.message });
+  });
+
   return mqttClient;
 }
 
 // Startup
+let server;
+
 async function start() {
   try {
     await connectDatabase();
-    app.listen(config.port, () => {
-      console.log(`Server running on port ${config.port}`);
+    server = http.createServer(app);
+    initSocketIO(server);
+    server.listen(config.port, () => {
+      logger.info(`Server running on port ${config.port} (HTTP + Socket.IO)`);
     });
     setupMqtt();
   } catch (err) {
-    console.error('Failed to start server:', err);
+    logger.error('Failed to start server', { error: err.message });
     process.exit(1);
   }
 }
 
 async function shutdown() {
-  console.log('Shutting down...');
+  logger.info('Shutting down...');
+  if (server) server.close();
   await mongoose.disconnect();
   process.exit(0);
 }

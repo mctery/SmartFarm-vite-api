@@ -1,6 +1,7 @@
 const Device = require('../models/deviceModel');
 const SensorWidget = require('../models/sensorWidgetModel');
 const asyncHandler = require('express-async-handler');
+const logger = require('../config/logger');
 
 let commandClient = null;
 function setCommandClient(client) {
@@ -8,13 +9,29 @@ function setCommandClient(client) {
 }
 
 const getDevices = asyncHandler(async (req, res) => {
-  console.log('getDevices called');
+  logger.debug('getDevices called');
+  const page = parseInt(req.query?.page) || 0;
+  const limit = parseInt(req.query?.limit) || 0;
+
+  if (page > 0 && limit > 0) {
+    const skip = (page - 1) * limit;
+    const [devices, total] = await Promise.all([
+      Device.find({ status: 'A' }).skip(skip).limit(limit),
+      Device.countDocuments({ status: 'A' }),
+    ]);
+    return res.json({
+      message: 'OK',
+      data: devices,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  }
+
   const devices = await Device.find({ status: 'A' });
   res.json({ message: 'OK', data: devices });
 });
 
 const getDevice = asyncHandler(async (req, res) => {
-  console.log('getDevice called');
+  logger.debug('getDevice called');
   const device = await Device.findById(req.params.id);
   if (!device) {
     res.status(404);
@@ -24,13 +41,30 @@ const getDevice = asyncHandler(async (req, res) => {
 });
 
 const getDeviceUser = asyncHandler(async (req, res) => {
-  console.log('getDeviceUser called');
-  const device = await Device.find({ user_id: req.params.user_id, status: 'A' });
+  logger.debug('getDeviceUser called');
+  const query = { user_id: req.params.user_id, status: 'A' };
+  const page = parseInt(req.query?.page) || 0;
+  const limit = parseInt(req.query?.limit) || 0;
+
+  if (page > 0 && limit > 0) {
+    const skip = (page - 1) * limit;
+    const [devices, total] = await Promise.all([
+      Device.find(query).skip(skip).limit(limit),
+      Device.countDocuments(query),
+    ]);
+    return res.json({
+      message: 'OK',
+      data: devices,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  }
+
+  const device = await Device.find(query);
   res.json({ message: 'OK', data: device });
 });
 
 const createDevice = asyncHandler(async (req, res) => {
-  console.log('createDevice called');
+  logger.debug('createDevice called');
   req.body.status = 'A';
 
   const exists = await Device.findOne({ device_id: req.body.device_id });
@@ -45,7 +79,7 @@ const createDevice = asyncHandler(async (req, res) => {
 });
 
 const updateDevice = asyncHandler(async (req, res) => {
-  console.log('updateDevice called');
+  logger.debug('updateDevice called');
   const { id } = req.params;
   const updateData = { ...req.body };
 
@@ -65,7 +99,7 @@ const updateDevice = asyncHandler(async (req, res) => {
 });
 
 const deleteDevice = asyncHandler(async (req, res) => {
-  console.log('deleteDevice called');
+  logger.debug('deleteDevice called');
   const device = await Device.findByIdAndUpdate(req.params.id, { status: 'D' }, { new: true });
   if (!device) {
     res.status(404);
@@ -75,7 +109,7 @@ const deleteDevice = asyncHandler(async (req, res) => {
 });
 
 const sendDeviceCommand = asyncHandler(async (req, res) => {
-  console.log('sendDeviceCommand called');
+  logger.debug('sendDeviceCommand called');
   const { id } = req.params;
   const { command, payload } = req.body;
 

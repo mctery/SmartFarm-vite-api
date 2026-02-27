@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const sensorSchema = mongoose.Schema(
   {
     user_id: {
-      type: Number,
+      type: String,
       required: false,
     },
     device_id: {
@@ -26,20 +26,38 @@ const sensorSchema = mongoose.Schema(
       type: String,
       required: false,
     },
+    max: {
+      type: Number,
+      required: false,
+      default: null,
+    },
+    min: {
+      type: Number,
+      required: false,
+      default: null,
+    },
+    ratio: {
+      type: String,
+      required: false,
+      default: null,
+    },
     bgcolor: {
       type: String,
       required: false,
       default: '#ecf0f1',
     },
     status: {
-      type: Boolean,
+      type: String,
       required: false,
+      default: 'A',
     },
   },
   {
     timestamps: true,
   }
 );
+
+sensorSchema.index({ device_id: 1, sensor_type: 1 });
 
 const Sensor = mongoose.model('Sensor', sensorSchema);
 

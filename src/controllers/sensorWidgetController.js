@@ -1,20 +1,21 @@
 const SensorWidget = require('../models/sensorWidgetModel');
 const asyncHandler = require('express-async-handler');
+const logger = require('../config/logger');
 
 const getSensorWidget = asyncHandler(async (req, res) => {
-  console.log('getSensorWidget called');
+  logger.debug('getSensorWidget called');
   const result = await SensorWidget.find({ device_id: req.params.device_id });
-  res.json(result);
+  res.json({ message: 'OK', data: result });
 });
 
 const createSensorWidget = asyncHandler(async (req, res) => {
-  console.log('createSensorWidget called');
+  logger.debug('createSensorWidget called');
   const result = await SensorWidget.create(req.body);
-  res.status(201).json(result);
+  res.status(201).json({ message: 'OK', data: result });
 });
 
 const updateSensorWidget = asyncHandler(async (req, res) => {
-  console.log('updateSensorWidget called');
+  logger.debug('updateSensorWidget called');
   const { device_id } = req.params;
   const updatedWidget = await SensorWidget.findOneAndUpdate(
     { device_id },
@@ -25,19 +26,19 @@ const updateSensorWidget = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error(`SensorWidget not found: ${device_id}`);
   }
-  console.log(`Updated widget for device ${device_id}`);
-  res.json(updatedWidget);
+  logger.debug('Updated widget', { device_id });
+  res.json({ message: 'OK', data: updatedWidget });
 });
 
 const deleteSensorWidget = asyncHandler(async (req, res) => {
-  console.log('deleteSensorWidget called');
+  logger.debug('deleteSensorWidget called');
   const { device_id } = req.params;
   const result = await SensorWidget.findOneAndUpdate({ device_id }, { status: 'D' });
   if (!result) {
     res.status(404);
     throw new Error(`SensorWidget not found: ${device_id}`);
   }
-  res.json(result);
+  res.json({ message: 'OK', data: result });
 });
 
 module.exports = {

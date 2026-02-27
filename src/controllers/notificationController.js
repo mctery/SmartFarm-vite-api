@@ -1,33 +1,21 @@
 const Notification = require('../models/notificationModel');
 const asyncHandler = require('express-async-handler');
 const logger = require('../config/logger');
+const { QUERY_LIMITS } = require('../config');
+const { paginateQuery } = require('../utils/pagination');
 
 const getNotifications = asyncHandler(async (req, res) => {
   logger.debug('getNotifications called');
   const { user_id } = req.params;
-  const page = parseInt(req.query?.page) || null;
-  const limit = parseInt(req.query?.limit) || 20;
-
   const filter = { user_id };
   if (req.query?.is_read !== undefined) {
     filter.is_read = req.query.is_read === 'true';
   }
 
-  if (page) {
-    const skip = (page - 1) * limit;
-    const [notifications, total] = await Promise.all([
-      Notification.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Notification.countDocuments(filter),
-    ]);
-    return res.json({
-      message: 'OK',
-      data: notifications,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    });
-  }
-
-  const notifications = await Notification.find(filter).sort({ createdAt: -1 }).limit(limit);
-  res.json({ message: 'OK', data: notifications });
+  const result = await paginateQuery(Notification, filter, req.query, {
+    defaultLimit: QUERY_LIMITS.default,
+  });
+  res.json({ message: 'OK', data: result.data, ...(result.pagination && { pagination: result.pagination }) });
 });
 
 const getUnreadCount = asyncHandler(async (req, res) => {

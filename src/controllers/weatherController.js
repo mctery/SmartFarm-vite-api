@@ -1,6 +1,6 @@
 const axios = require('axios').default;
 const asyncHandler = require('express-async-handler');
-const { weatherCacheTTL } = require('../config');
+const { weatherCacheTTL, WEATHER_CACHE_CLEANUP_MS } = require('../config');
 const logger = require('../config/logger');
 
 const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
@@ -15,7 +15,7 @@ setInterval(() => {
       delete weatherCache[key];
     }
   }
-}, 10 * 60 * 1000);
+}, WEATHER_CACHE_CLEANUP_MS);
 
 const getWeatherNow = asyncHandler(async (req, res) => {
   logger.debug('getWeatherNow called');

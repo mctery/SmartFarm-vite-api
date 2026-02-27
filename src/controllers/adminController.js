@@ -6,14 +6,16 @@ const asyncHandler = require('express-async-handler');
 const { PERMISSION_GROUPS, DEFAULT_USER_PERMISSIONS } = require('../config/permissions');
 const getUserId = require('../utils/getUserId');
 const logger = require('../config/logger');
+const { STATUS, QUERY_LIMITS } = require('../config');
+const { parsePagination, paginationMeta } = require('../utils/pagination');
 
 const getAdminUsers = asyncHandler(async (req, res) => {
   logger.debug('getAdminUsers called');
-  const { search, page = 1, limit = 20 } = req.query;
+  const { search, page = 1, limit = QUERY_LIMITS.default } = req.query;
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const limitNum = Math.min(QUERY_LIMITS.adminUsersMax, Math.max(1, parseInt(limit, 10) || QUERY_LIMITS.default));
 
-  const filter = { status: 'A' };
+  const filter = { status: STATUS.ACTIVE };
   if (search) {
     const regex = new RegExp(search, 'i');
     filter.$or = [{ first_name: regex }, { last_name: regex }, { email: regex }];
@@ -31,7 +33,7 @@ const getAdminUsers = asyncHandler(async (req, res) => {
   res.json({
     message: 'OK',
     data: users,
-    pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    pagination: paginationMeta(pageNum, limitNum, total),
   });
 });
 
@@ -61,7 +63,6 @@ const updateUserRole = asyncHandler(async (req, res) => {
     throw new Error(`User not found: ${id}`);
   }
 
-  // If promoted to admin, set wildcard permissions
   if (role === 'admin') {
     const userId = getUserId(user);
     await Permission.findOneAndUpdate(
@@ -116,7 +117,7 @@ const getPermissionDefinitions = asyncHandler(async (req, res) => {
 
 const getAdminMenus = asyncHandler(async (req, res) => {
   logger.debug('getAdminMenus called');
-  const menus = await Menu.find({ status: 'A' }).sort({ order: 1 });
+  const menus = await Menu.find({ status: STATUS.ACTIVE }).sort({ order: 1 });
   res.json({ message: 'OK', data: menus });
 });
 
@@ -147,7 +148,7 @@ const updateUserMenus = asyncHandler(async (req, res) => {
   const { menu_ids } = req.body;
 
   if (menu_ids.length > 0) {
-    const existingCount = await Menu.countDocuments({ _id: { $in: menu_ids }, status: 'A' });
+    const existingCount = await Menu.countDocuments({ _id: { $in: menu_ids }, status: STATUS.ACTIVE });
     if (existingCount !== menu_ids.length) {
       res.status(400);
       throw new Error('One or more menu_ids are invalid or refer to inactive menus');

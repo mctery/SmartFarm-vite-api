@@ -1,6 +1,6 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
-const { jwtSecret, corsOrigin } = require('./index');
+const { jwtSecret, corsOrigin, STATUS } = require('./index');
 const Device = require('../models/deviceModel');
 const logger = require('./logger');
 
@@ -67,8 +67,8 @@ function initSocketIO(httpServer) {
 
 async function joinUserDeviceRooms(socket) {
   const query = socket.userRole === 'admin'
-    ? { status: 'A' }
-    : { user_id: socket.userId, status: 'A' };
+    ? { status: STATUS.ACTIVE }
+    : { user_id: socket.userId, status: STATUS.ACTIVE };
 
   const devices = await Device.find(query).select('device_id').lean();
 

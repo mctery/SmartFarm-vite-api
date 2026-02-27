@@ -29,11 +29,11 @@ function resMock() {
 }
 
 (async () => {
-  // getAuditLogs with default pagination
+  // getAuditLogs with pagination
   FakeAuditLog.findResult = [{ _id: 'a1', action: 'create' }];
   FakeAuditLog.countResult = 1;
   let res = resMock();
-  await getAuditLogs({ query: {} }, res);
+  await getAuditLogs({ query: { page: '1', limit: '20' } }, res);
   assert.strictEqual(res.data.message, 'OK');
   assert.ok(res.data.pagination);
   assert.strictEqual(res.data.pagination.page, 1);

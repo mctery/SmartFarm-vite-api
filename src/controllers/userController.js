@@ -5,7 +5,7 @@ const UserMenu = require('../models/userMenuModel');
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { jwtSecret, jwtExpiry, refreshSecret, refreshExpiry, bcryptRounds } = require('../config');
+const { jwtSecret, jwtExpiry, refreshSecret, refreshExpiry, bcryptRounds, STATUS } = require('../config');
 const { DEFAULT_USER_PERMISSIONS } = require('../config/permissions');
 const { buildMenuHierarchy } = require('./menuController');
 const getUserId = require('../utils/getUserId');
@@ -22,18 +22,18 @@ async function resolvePermissions(role, userId) {
 async function resolveMenus(role, userId) {
   let menus;
   if (role === 'admin') {
-    menus = await Menu.find({ status: 'A' });
+    menus = await Menu.find({ status: STATUS.ACTIVE });
   } else {
     const userMenu = await UserMenu.findOne({ user_id: userId });
     if (!userMenu || userMenu.menu_ids.length === 0) return [];
-    menus = await Menu.find({ _id: { $in: userMenu.menu_ids }, status: 'A' });
+    menus = await Menu.find({ _id: { $in: userMenu.menu_ids }, status: STATUS.ACTIVE });
   }
   return buildMenuHierarchy(menus);
 }
 
 const getUsers = asyncHandler(async (req, res) => {
   logger.debug('getUsers called');
-  const users = await User.find({ status: 'A' }).select('-password');
+  const users = await User.find({ status: STATUS.ACTIVE }).select('-password');
   res.json({ message: 'OK', data: users });
 });
 
@@ -50,7 +50,7 @@ const getUser = asyncHandler(async (req, res) => {
 const getMe = asyncHandler(async (req, res) => {
   logger.debug('getMe called');
   const email = req.User_name && req.User_name.user;
-  const user = await User.findOne({ email, status: 'A' }).select('-password');
+  const user = await User.findOne({ email, status: STATUS.ACTIVE }).select('-password');
   if (!user) {
     res.status(404);
     throw new Error('User not found');
@@ -61,7 +61,7 @@ const getMe = asyncHandler(async (req, res) => {
 const updateMe = asyncHandler(async (req, res) => {
   logger.debug('updateMe called');
   const email = req.User_name && req.User_name.user;
-  const user = await User.findOne({ email, status: 'A' });
+  const user = await User.findOne({ email, status: STATUS.ACTIVE });
   if (!user) {
     res.status(404);
     throw new Error('User not found');
@@ -143,7 +143,7 @@ const refreshToken = asyncHandler(async (req, res) => {
     throw new Error('Invalid token type');
   }
 
-  const user = await User.findOne({ email: decoded.user, status: 'A' });
+  const user = await User.findOne({ email: decoded.user, status: STATUS.ACTIVE });
   if (!user) {
     res.status(401);
     throw new Error('User not found or inactive');
@@ -170,7 +170,7 @@ const createUser = asyncHandler(async (req, res) => {
   }
 
   info.password = await bcrypt.hash(info.password, bcryptRounds);
-  info.status = 'A';
+  info.status = STATUS.ACTIVE;
   const user = await User.create(info);
 
   // Create default Permission and UserMenu documents for the new user
@@ -178,8 +178,8 @@ const createUser = asyncHandler(async (req, res) => {
   await Permission.create({ user_id: userId, permissions: DEFAULT_USER_PERMISSIONS });
 
   // Assign all non-admin menus to the new user
-  const defaultMenus = await Menu.find({ status: 'A', parent_id: null, key: { $nin: ['admin'] } });
-  const childMenus = await Menu.find({ status: 'A', parent_id: { $in: defaultMenus.map(m => m._id) } });
+  const defaultMenus = await Menu.find({ status: STATUS.ACTIVE, parent_id: null, key: { $nin: ['admin'] } });
+  const childMenus = await Menu.find({ status: STATUS.ACTIVE, parent_id: { $in: defaultMenus.map(m => m._id) } });
   const allDefaultMenuIds = [...defaultMenus.map(m => m._id), ...childMenus.map(m => m._id)];
   await UserMenu.create({ user_id: userId, menu_ids: allDefaultMenuIds });
 
@@ -209,7 +209,7 @@ const updateUser = asyncHandler(async (req, res) => {
 const deleteUser = asyncHandler(async (req, res) => {
   logger.debug('deleteUser called');
   const { id } = req.params;
-  const user = await User.findByIdAndUpdate(id, { status: 'D' }).select('-password');
+  const user = await User.findByIdAndUpdate(id, { status: STATUS.DELETED }).select('-password');
   if (!user) {
     res.status(404);
     throw new Error(`User not found: ${id}`);

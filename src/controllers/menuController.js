@@ -2,6 +2,7 @@ const Menu = require('../models/menuModel');
 const UserMenu = require('../models/userMenuModel');
 const asyncHandler = require('express-async-handler');
 const logger = require('../config/logger');
+const { STATUS } = require('../config');
 
 /**
  * Build hierarchical menu structure from a flat array of menu documents.
@@ -36,7 +37,7 @@ function buildMenuHierarchy(menus) {
 
 const getMenus = asyncHandler(async (req, res) => {
   logger.debug('getMenus called');
-  const menus = await Menu.find({ status: 'A' });
+  const menus = await Menu.find({ status: STATUS.ACTIVE });
   res.json({ message: 'OK', data: menus });
 });
 
@@ -56,7 +57,7 @@ const createMenu = asyncHandler(async (req, res) => {
 
 const updateMenu = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const updated = await Menu.findByIdAndUpdate(id, req.body, { new: true });
+  const updated = await Menu.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
   if (!updated) {
     res.status(404);
     throw new Error(`Menu not found: ${id}`);
@@ -66,7 +67,7 @@ const updateMenu = asyncHandler(async (req, res) => {
 
 const deleteMenu = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const menu = await Menu.findByIdAndUpdate(id, { status: 'D' });
+  const menu = await Menu.findByIdAndUpdate(id, { status: STATUS.DELETED });
   if (!menu) {
     res.status(404);
     throw new Error(`Menu not found: ${id}`);
@@ -83,13 +84,13 @@ const getAccessibleMenus = asyncHandler(async (req, res) => {
   let menus;
 
   if (role === 'admin') {
-    menus = await Menu.find({ status: 'A' });
+    menus = await Menu.find({ status: STATUS.ACTIVE });
   } else {
     const userMenu = await UserMenu.findOne({ user_id: userId });
     if (!userMenu || userMenu.menu_ids.length === 0) {
       return res.json({ message: 'OK', data: [] });
     }
-    menus = await Menu.find({ _id: { $in: userMenu.menu_ids }, status: 'A' });
+    menus = await Menu.find({ _id: { $in: userMenu.menu_ids }, status: STATUS.ACTIVE });
   }
 
   const hierarchy = buildMenuHierarchy(menus);

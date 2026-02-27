@@ -1,6 +1,7 @@
 const Device = require('../models/deviceModel');
 const User = require('../models/userModel');
 const getUserId = require('../utils/getUserId');
+const { findDeviceFlexible } = require('../utils/pagination');
 
 /**
  * Middleware that verifies the authenticated user owns the device.
@@ -38,15 +39,9 @@ function checkDeviceOwnership(idSource = 'params') {
       }
 
       // Try by MongoDB _id first (routes using /:id), then by device_id string
-      let device;
-      if (idSource === 'params') {
-        device = await Device.findById(deviceIdentifier).catch(() => null);
-        if (!device) {
-          device = await Device.findOne({ device_id: deviceIdentifier });
-        }
-      } else {
-        device = await Device.findOne({ device_id: deviceIdentifier });
-      }
+      const device = idSource === 'params'
+        ? await findDeviceFlexible(Device, deviceIdentifier)
+        : await Device.findOne({ device_id: deviceIdentifier });
 
       if (!device) {
         return res.status(404).json({ message: 'ERROR', data: 'Device not found' });

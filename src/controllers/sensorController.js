@@ -1,10 +1,12 @@
 const Sensor = require('../models/sensorModel');
 const asyncHandler = require('express-async-handler');
 const logger = require('../config/logger');
+const { STATUS } = require('../config');
+const { normalizeStatus } = require('../utils/pagination');
 
 const getSensors = asyncHandler(async (req, res) => {
   logger.debug('getSensors called');
-  const sensors = await Sensor.find({ status: 'A' });
+  const sensors = await Sensor.find({ status: STATUS.ACTIVE });
   res.json({ message: 'OK', data: sensors });
 });
 
@@ -21,24 +23,19 @@ const getSensor = asyncHandler(async (req, res) => {
 const getDeviceSensor = asyncHandler(async (req, res) => {
   logger.debug('getDeviceSensor called');
   const { id, type } = req.params;
-  const sensor = await Sensor.find({ device_id: id, sensor_type: type, status: 'A' });
+  const sensor = await Sensor.find({ device_id: id, sensor_type: type, status: STATUS.ACTIVE });
   res.json({ message: 'OK', data: sensor });
 });
 
 const getDeviceSensorById = asyncHandler(async (req, res) => {
   logger.debug('getDeviceSensorById called');
-  const sensor = await Sensor.find({ device_id: req.params.id, status: 'A' });
+  const sensor = await Sensor.find({ device_id: req.params.id, status: STATUS.ACTIVE });
   res.json({ message: 'OK', data: sensor });
 });
 
 const createSensor = asyncHandler(async (req, res) => {
   logger.debug('createSensor called');
-  if (typeof req.body.status === 'boolean') {
-    req.body.status = req.body.status ? 'A' : 'D';
-  }
-  if (!req.body.status) {
-    req.body.status = 'A';
-  }
+  req.body.status = normalizeStatus(req.body.status);
   const sensor = await Sensor.create(req.body);
   res.status(201).json({ message: 'OK', data: sensor });
 });
@@ -47,10 +44,10 @@ const updateSensor = asyncHandler(async (req, res) => {
   logger.debug('updateSensor called');
   const { id } = req.params;
   const updateData = { ...req.body };
-  if (typeof updateData.status === 'boolean') {
-    updateData.status = updateData.status ? 'A' : 'D';
+  if (updateData.status !== undefined) {
+    updateData.status = normalizeStatus(updateData.status);
   }
-  const updatedSensor = await Sensor.findByIdAndUpdate(id, updateData, { new: true });
+  const updatedSensor = await Sensor.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
   if (!updatedSensor) {
     res.status(404);
     throw new Error(`Sensor not found: ${id}`);
@@ -62,7 +59,7 @@ const deleteSensor = asyncHandler(async (req, res) => {
   logger.debug('deleteSensor called');
   const sensor = await Sensor.findByIdAndUpdate(
     req.params.id,
-    { status: 'D' },
+    { status: STATUS.DELETED },
     { new: true }
   );
   if (!sensor) {

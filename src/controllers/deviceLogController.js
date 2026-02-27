@@ -1,33 +1,21 @@
 const DeviceLog = require('../models/deviceLogModel');
 const asyncHandler = require('express-async-handler');
 const logger = require('../config/logger');
+const { QUERY_LIMITS } = require('../config');
+const { paginateQuery } = require('../utils/pagination');
 
 const getDeviceLogs = asyncHandler(async (req, res) => {
   logger.debug('getDeviceLogs called');
   const { device_id } = req.params;
-  const page = parseInt(req.query?.page) || null;
-  const limit = parseInt(req.query?.limit) || 50;
-
   const filter = { device_id };
   if (req.query?.event) {
     filter.event = req.query.event;
   }
 
-  if (page) {
-    const skip = (page - 1) * limit;
-    const [logs, total] = await Promise.all([
-      DeviceLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      DeviceLog.countDocuments(filter),
-    ]);
-    return res.json({
-      message: 'OK',
-      data: logs,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    });
-  }
-
-  const logs = await DeviceLog.find(filter).sort({ createdAt: -1 }).limit(limit);
-  res.json({ message: 'OK', data: logs });
+  const result = await paginateQuery(DeviceLog, filter, req.query, {
+    defaultLimit: QUERY_LIMITS.deviceLogs,
+  });
+  res.json({ message: 'OK', data: result.data, ...(result.pagination && { pagination: result.pagination }) });
 });
 
 const getDeviceOnlineHistory = asyncHandler(async (req, res) => {
@@ -38,7 +26,7 @@ const getDeviceOnlineHistory = asyncHandler(async (req, res) => {
     event: { $in: ['online', 'offline'] },
   })
     .sort({ createdAt: -1 })
-    .limit(100);
+    .limit(QUERY_LIMITS.onlineHistory);
   res.json({ message: 'OK', data: logs });
 });
 

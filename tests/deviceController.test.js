@@ -1,9 +1,23 @@
 const assert = require('assert');
 const path = require('path');
 
+/** Helper: make a chainable Mongoose-like query that resolves to `result`. */
+function chainable(result) {
+  const q = {
+    sort()  { return q; },
+    skip()  { return q; },
+    limit() { return q; },
+    select(){ return q; },
+    lean()  { return q; },
+    then(resolve, reject) { return Promise.resolve(result).then(resolve, reject); },
+  };
+  return q;
+}
+
 const FakeDevice = {
   findCalls: [],
-  async find(query) { this.findCalls.push(query); return [{_id:'1'}]; },
+  find(query) { this.findCalls.push(query); return chainable([{_id:'1'}]); },
+  async countDocuments() { return 1; },
   async findById(id) { this.lastFindById = id; return { _id: id }; },
   async findOne(query) { return FakeDevice._findOneResult; },
   async create(data) { this.created = data; return data; },
@@ -40,18 +54,26 @@ function mockRes() {
 }
 
 async function run() {
-  // getDevices
-  let req = {}; let res = mockRes();
+  // getDevices (no pagination params → defaultLimit: 0 → returns all)
+  let req = { query: {} }; let res = mockRes();
   await getDevices(req,res);
   assert.deepStrictEqual(FakeDevice.findCalls[0], { status: 'A' });
+  assert.strictEqual(res.statusCode, 200);
 
-  // getDevice
+  // getDevice (by ObjectId-like id)
+  req = { params:{id:'507f1f77bcf86cd799439011'} }; res = mockRes();
+  await getDevice(req,res);
+  assert.strictEqual(FakeDevice.lastFindById,'507f1f77bcf86cd799439011');
+
+  // getDevice (by device_id string)
+  FakeDevice._findOneResult = { _id: 'x', device_id: 'dev1' };
   req = { params:{id:'dev1'} }; res = mockRes();
   await getDevice(req,res);
-  assert.strictEqual(FakeDevice.lastFindById,'dev1');
+  assert.strictEqual(res.data.data.device_id, 'dev1');
+  FakeDevice._findOneResult = null;
 
   // getDeviceUser
-  req = { params:{user_id:'u1'} }; res = mockRes();
+  req = { params:{user_id:'u1'}, query: {} }; res = mockRes();
   await getDeviceUser(req,res);
   assert.deepStrictEqual(FakeDevice.findCalls[1], { user_id:'u1', status:'A' });
 

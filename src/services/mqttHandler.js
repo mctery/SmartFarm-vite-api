@@ -4,6 +4,7 @@ const DeviceLog = require('../models/deviceLogModel');
 const SensorThreshold = require('../models/sensorThresholdModel');
 const Notification = require('../models/notificationModel');
 const logger = require('../config/logger');
+const { SENSOR_VALUE_RANGE } = require('../config');
 const { emitToDevice } = require('../config/socketio');
 
 /**
@@ -40,7 +41,7 @@ async function handleSensorMessage(topic, message) {
         logger.warn('MQTT non-numeric sensor value', { topic, sensorId, value });
         continue;
       }
-      if (numValue < -1000 || numValue > 10000) {
+      if (numValue < SENSOR_VALUE_RANGE.min || numValue > SENSOR_VALUE_RANGE.max) {
         logger.warn('MQTT sensor value out of range', { topic, sensorId, value: numValue });
         continue;
       }

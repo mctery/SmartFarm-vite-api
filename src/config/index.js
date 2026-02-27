@@ -1,5 +1,23 @@
 require('dotenv').config();
 
+/** Record status constants — single source of truth for soft-delete pattern */
+const STATUS = { ACTIVE: 'A', DELETED: 'D' };
+
+/** Sensor value range for MQTT validation */
+const SENSOR_VALUE_RANGE = { min: -1000, max: 10000 };
+
+/** Default query limits per resource */
+const QUERY_LIMITS = {
+  default: 20,
+  auditLogs: 50,
+  deviceLogs: 50,
+  onlineHistory: 100,
+  adminUsersMax: 100,
+};
+
+/** Weather cache cleanup interval (ms) */
+const WEATHER_CACHE_CLEANUP_MS = 10 * 60 * 1000; // 10 minutes
+
 module.exports = {
   port: process.env.PORT || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -25,4 +43,8 @@ module.exports = {
   rateLimitWindowMs: 15 * 60 * 1000, // 15 minutes
   rateLimitMax: 100,
   authRateLimitMax: 10,
+  STATUS,
+  SENSOR_VALUE_RANGE,
+  QUERY_LIMITS,
+  WEATHER_CACHE_CLEANUP_MS,
 };

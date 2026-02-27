@@ -2,6 +2,8 @@ const Device = require('../models/deviceModel');
 const SensorWidget = require('../models/sensorWidgetModel');
 const asyncHandler = require('express-async-handler');
 const logger = require('../config/logger');
+const { STATUS } = require('../config');
+const { paginateQuery, normalizeStatus, findDeviceFlexible } = require('../utils/pagination');
 
 let commandClient = null;
 function setCommandClient(client) {
@@ -10,29 +12,14 @@ function setCommandClient(client) {
 
 const getDevices = asyncHandler(async (req, res) => {
   logger.debug('getDevices called');
-  const page = parseInt(req.query?.page) || 0;
-  const limit = parseInt(req.query?.limit) || 0;
-
-  if (page > 0 && limit > 0) {
-    const skip = (page - 1) * limit;
-    const [devices, total] = await Promise.all([
-      Device.find({ status: 'A' }).skip(skip).limit(limit),
-      Device.countDocuments({ status: 'A' }),
-    ]);
-    return res.json({
-      message: 'OK',
-      data: devices,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    });
-  }
-
-  const devices = await Device.find({ status: 'A' });
-  res.json({ message: 'OK', data: devices });
+  const filter = { status: STATUS.ACTIVE };
+  const result = await paginateQuery(Device, filter, req.query, { defaultLimit: 0 });
+  res.json({ message: 'OK', data: result.data, ...(result.pagination && { pagination: result.pagination }) });
 });
 
 const getDevice = asyncHandler(async (req, res) => {
   logger.debug('getDevice called');
-  const device = await Device.findById(req.params.id);
+  const device = await findDeviceFlexible(Device, req.params.id);
   if (!device) {
     res.status(404);
     throw new Error(`Device not found: ${req.params.id}`);
@@ -42,30 +29,14 @@ const getDevice = asyncHandler(async (req, res) => {
 
 const getDeviceUser = asyncHandler(async (req, res) => {
   logger.debug('getDeviceUser called');
-  const query = { user_id: req.params.user_id, status: 'A' };
-  const page = parseInt(req.query?.page) || 0;
-  const limit = parseInt(req.query?.limit) || 0;
-
-  if (page > 0 && limit > 0) {
-    const skip = (page - 1) * limit;
-    const [devices, total] = await Promise.all([
-      Device.find(query).skip(skip).limit(limit),
-      Device.countDocuments(query),
-    ]);
-    return res.json({
-      message: 'OK',
-      data: devices,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    });
-  }
-
-  const device = await Device.find(query);
-  res.json({ message: 'OK', data: device });
+  const filter = { user_id: req.params.user_id, status: STATUS.ACTIVE };
+  const result = await paginateQuery(Device, filter, req.query, { defaultLimit: 0 });
+  res.json({ message: 'OK', data: result.data, ...(result.pagination && { pagination: result.pagination }) });
 });
 
 const createDevice = asyncHandler(async (req, res) => {
   logger.debug('createDevice called');
-  req.body.status = 'A';
+  req.body.status = STATUS.ACTIVE;
 
   const exists = await Device.findOne({ device_id: req.body.device_id });
   if (exists) {
@@ -82,10 +53,7 @@ const updateDevice = asyncHandler(async (req, res) => {
   logger.debug('updateDevice called');
   const { id } = req.params;
   const updateData = { ...req.body };
-
-  if (typeof updateData.status === 'boolean') {
-    updateData.status = updateData.status ? 'A' : 'D';
-  }
+  updateData.status = normalizeStatus(updateData.status);
 
   const updatedDevice = await Device.findByIdAndUpdate(id, updateData, {
     new: true,
@@ -100,7 +68,7 @@ const updateDevice = asyncHandler(async (req, res) => {
 
 const deleteDevice = asyncHandler(async (req, res) => {
   logger.debug('deleteDevice called');
-  const device = await Device.findByIdAndUpdate(req.params.id, { status: 'D' }, { new: true });
+  const device = await Device.findByIdAndUpdate(req.params.id, { status: STATUS.DELETED }, { new: true });
   if (!device) {
     res.status(404);
     throw new Error(`Device not found: ${req.params.id}`);

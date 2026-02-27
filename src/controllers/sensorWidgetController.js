@@ -1,6 +1,7 @@
 const SensorWidget = require('../models/sensorWidgetModel');
 const asyncHandler = require('express-async-handler');
 const logger = require('../config/logger');
+const { STATUS } = require('../config');
 
 const getSensorWidget = asyncHandler(async (req, res) => {
   logger.debug('getSensorWidget called');
@@ -33,7 +34,7 @@ const updateSensorWidget = asyncHandler(async (req, res) => {
 const deleteSensorWidget = asyncHandler(async (req, res) => {
   logger.debug('deleteSensorWidget called');
   const { device_id } = req.params;
-  const result = await SensorWidget.findOneAndUpdate({ device_id }, { status: 'D' });
+  const result = await SensorWidget.findOneAndUpdate({ device_id }, { status: STATUS.DELETED });
   if (!result) {
     res.status(404);
     throw new Error(`SensorWidget not found: ${device_id}`);

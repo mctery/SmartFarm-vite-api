@@ -50,6 +50,18 @@ app.use(express.json({ limit: config.bodyLimit }));
 app.use(express.urlencoded({ limit: config.bodyLimit, extended: true }));
 app.use(requestLogger);
 
+// Vercel serverless: lazy DB connection on first request
+if (process.env.VERCEL) {
+  let dbReady = false;
+  app.use(async (_req, _res, next) => {
+    if (!dbReady) {
+      await connectDatabase();
+      dbReady = true;
+    }
+    next();
+  });
+}
+
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/devices', deviceRoutes);
@@ -139,4 +151,9 @@ async function shutdown() {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-start();
+// Only auto-start when run directly (not when imported by Vercel serverless)
+if (require.main === module) {
+  start();
+}
+
+module.exports = { app, start, connectDatabase };

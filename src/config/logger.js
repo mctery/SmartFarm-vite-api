@@ -20,17 +20,20 @@ const logger = winston.createLogger({
         }),
       ),
     }),
-    new winston.transports.File({
-      filename: path.join('logs', 'error.log'),
-      level: 'error',
-      maxsize: 5242880,
-      maxFiles: 5,
-    }),
-    new winston.transports.File({
-      filename: path.join('logs', 'combined.log'),
-      maxsize: 5242880,
-      maxFiles: 5,
-    }),
+    // File transports only in non-serverless environments (Vercel has read-only filesystem)
+    ...(!process.env.VERCEL ? [
+      new winston.transports.File({
+        filename: path.join('logs', 'error.log'),
+        level: 'error',
+        maxsize: 5242880,
+        maxFiles: 5,
+      }),
+      new winston.transports.File({
+        filename: path.join('logs', 'combined.log'),
+        maxsize: 5242880,
+        maxFiles: 5,
+      }),
+    ] : []),
   ],
 });
 

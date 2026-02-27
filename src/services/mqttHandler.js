@@ -49,7 +49,7 @@ async function handleSensorMessage(topic, message) {
         device_id: payload.device_id,
         sensor_id: sensorId,
         sensor: sensorType,
-        value: String(value),
+        value: numValue,
       });
     }
 
@@ -92,8 +92,7 @@ async function checkThresholds(deviceId, sensorDocs) {
     if (!device) return;
 
     for (const doc of sensorDocs) {
-      const numValue = parseFloat(doc.value);
-      if (isNaN(numValue)) continue;
+      const numValue = doc.value;
 
       const threshold = thresholds.find((t) => t.sensor_id === doc.sensor_id);
       if (!threshold) continue;

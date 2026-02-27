@@ -28,6 +28,8 @@ module.exports = {
   refreshExpiry: process.env.REFRESH_EXPIRY || '7d',
   bcryptRounds: 10,
   mqttUrl: process.env.MQTT_URL,
+  mqttUser: process.env.MQTT_USER || '',
+  mqttPass: process.env.MQTT_PASS || '',
   mqttTopics: [
     'device/+/temperature',
     'device/+/humidity',
@@ -48,3 +50,11 @@ module.exports = {
   QUERY_LIMITS,
   WEATHER_CACHE_CLEANUP_MS,
 };
+
+// Startup warning for missing security config
+if (!process.env.REFRESH_TOKEN_KEY) {
+  console.warn(
+    '[WARN] REFRESH_TOKEN_KEY is not set — using TOKEN_KEY + "_refresh" as fallback. ' +
+    'Set a dedicated REFRESH_TOKEN_KEY in .env for production.'
+  );
+}

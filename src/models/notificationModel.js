@@ -41,13 +41,19 @@ const notificationSchema = mongoose.Schema(
       type: Date,
       default: null,
     },
+    status: {
+      type: String,
+      required: true,
+      default: 'A',
+      enum: ['A', 'D'],
+    },
   },
   {
     timestamps: true,
   }
 );
 
-notificationSchema.index({ user_id: 1, is_read: 1, createdAt: -1 });
+notificationSchema.index({ user_id: 1, status: 1, is_read: 1, createdAt: -1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 module.exports = Notification;

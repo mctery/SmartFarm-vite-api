@@ -109,6 +109,7 @@ const getAggregateSensorData = asyncHandler(async (req, res) => {
 
   const pipeline = [
     { $match: match },
+    // TODO: Remove $addFields/$toDouble after migrating existing String values to Number
     { $addFields: { numericValue: { $toDouble: '$value' } } },
     {
       $group: {

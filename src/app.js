@@ -26,6 +26,9 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
+// Trust proxy (required for Vercel / reverse proxies — express-rate-limit needs correct client IP)
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 

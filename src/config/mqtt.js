@@ -4,8 +4,8 @@ const logger = require('./logger');
 
 function createMqttClient() {
   const client = mqtt.connect(config.mqttUrl, {
-    username: '',
-    password: '',
+    username: config.mqttUser,
+    password: config.mqttPass,
     clientId: 'mqttjs_' + Math.random().toString(16).substring(2, 10),
     reconnectPeriod: 5000,
     connectTimeout: 30000,

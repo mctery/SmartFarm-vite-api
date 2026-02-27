@@ -67,7 +67,7 @@ async function seed() {
       device_id: sensors[i - 1].device_id,
       sensor_id: sensors[i - 1].sensor_id,
       sensor: sensors[i - 1].sensor_type,
-      value: `${20 + i}`,
+      value: 20 + i,
       status: true,
     });
   }

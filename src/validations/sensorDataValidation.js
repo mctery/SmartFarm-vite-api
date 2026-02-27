@@ -19,7 +19,7 @@ const createSensorDataValueSchema = Joi.object({
       Joi.object({
         id: Joi.string().required(),
         sensor: Joi.string().required(),
-        value: Joi.alternatives().try(Joi.string(), Joi.number()).required(),
+        value: Joi.number().required(),
       })
     )
     .min(1)

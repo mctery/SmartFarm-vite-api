@@ -7,10 +7,6 @@ const rateLimit = require('express-rate-limit');
 const config = require('./config');
 const logger = require('./config/logger');
 const requestLogger = require('./middleware/requestLogger');
-const { createMqttClient, subscribeSensorTopics } = require('./config/mqtt');
-const { handleSensorMessage, handleDeviceCheckin, handleDeviceWill } = require('./services/mqttHandler');
-const { setCommandClient } = require('./controllers/deviceController');
-const { initSocketIO } = require('./config/socketio');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 // Routes
@@ -93,8 +89,12 @@ async function connectDatabase() {
   logger.info('Connected to MongoDB');
 }
 
-// MQTT
+// MQTT (lazy-loaded — only in local/production, not Vercel serverless)
 function setupMqtt() {
+  const { createMqttClient, subscribeSensorTopics } = require('./config/mqtt');
+  const { handleSensorMessage, handleDeviceCheckin, handleDeviceWill } = require('./services/mqttHandler');
+  const { setCommandClient } = require('./controllers/deviceController');
+
   logger.info('Setting up MQTT...');
   const mqttClient = createMqttClient();
   setCommandClient(mqttClient);
@@ -123,10 +123,12 @@ function setupMqtt() {
   return mqttClient;
 }
 
-// Startup
+// Startup (local/production only — NOT used on Vercel serverless)
 let server;
 
 async function start() {
+  const { initSocketIO } = require('./config/socketio');
+
   try {
     await connectDatabase();
     server = http.createServer(app);

@@ -33,6 +33,14 @@ const userSchema = mongoose.Schema(
             default: function() {
                 return this._id
             }
+        },
+        resetToken: {
+            type: String,
+            default: null
+        },
+        resetTokenExpiry: {
+            type: Date,
+            default: null
         }
     },
     {

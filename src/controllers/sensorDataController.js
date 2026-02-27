@@ -85,11 +85,14 @@ const getAggregateSensorData = asyncHandler(async (req, res) => {
 
   const match = { device_id, sensor };
   if (sensor_id) match.sensor_id = sensor_id;
-  if (startDate || endDate) {
-    match.createdAt = {};
-    if (startDate) match.createdAt.$gte = new Date(startDate);
-    if (endDate) match.createdAt.$lte = new Date(endDate);
-  }
+
+  // Default to last 7 days if no date range is provided
+  const effectiveEnd = endDate ? new Date(endDate) : new Date();
+  const effectiveStart = startDate
+    ? new Date(startDate)
+    : new Date(effectiveEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  match.createdAt = { $gte: effectiveStart, $lte: effectiveEnd };
 
   let dateGroup;
   if (groupBy === 'day') {

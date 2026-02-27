@@ -266,6 +266,29 @@ All routes require admin role.
 |--------|------|-------------|
 | GET | `/health` | Returns `{ status: 'ok' }` |
 
+---
+
+## Admin Panel API Roadmap
+
+New endpoints planned for the admin panel expansion:
+
+| Phase | Method | Path | Description | Status |
+|-------|--------|------|-------------|--------|
+| 1 | GET | `/api/admin/stats` | ภาพรวมระบบ (counts + recent logs) | Planned |
+| 2 | GET | `/api/admin/devices` | รายการอุปกรณ์ทั้งหมด + search/filter | Planned |
+| 3 | GET | `/api/admin/sensors` | รายการเซ็นเซอร์ + filter by device/type | Planned |
+| 5 | GET | `/api/admin/device-logs` | ล็อกการเชื่อมต่ออุปกรณ์ | Planned |
+| 6 | GET | `/api/admin/notifications` | แจ้งเตือนทั้งหมด + filter | Planned |
+| 6 | POST | `/api/admin/notifications` | สร้างแจ้งเตือนถึง user ทุกคน | Planned |
+| 8 | GET | `/api/admin/system-info` | สถานะระบบ (DB/MQTT/Email) | Planned |
+| 10 | PUT | `/api/admin/users/bulk-role` | เปลี่ยน role หลายคน | Planned |
+| 10 | DELETE | `/api/admin/users/bulk-delete` | ลบผู้ใช้หลายคน | Planned |
+| 10 | DELETE | `/api/admin/devices/bulk-delete` | ลบอุปกรณ์หลายตัว | Planned |
+
+Phases 4 (Audit Logs) and 7 (Menu Management) use existing endpoints — no new API needed.
+
+---
+
 ## MQTT Topics
 
 The API subscribes to these MQTT topics for real-time sensor data:

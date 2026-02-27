@@ -15,7 +15,14 @@
     "migrate:menus": "node src/scripts/migrateMenus.js",
     "seed": "node src/scripts/seedSampleData.js"
   },
-  "keywords": ["smartfarm", "iot", "mqtt", "express", "mongodb", "rest-api"],
+  "keywords": [
+    "smartfarm",
+    "iot",
+    "mqtt",
+    "express",
+    "mongodb",
+    "rest-api"
+  ],
   "author": "SmartFarm Team",
   "license": "ISC",
   "dependencies": {
@@ -31,6 +38,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^6.8.3",
     "mqtt": "^5.0.5",
+    "resend": "^6.9.2",
     "socket.io": "^4.7.5",
     "winston": "^3.19.0"
   },

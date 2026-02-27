@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const User = require('../models/userModel');
 const Permission = require('../models/permissionModel');
 const Menu = require('../models/menuModel');
@@ -5,7 +6,8 @@ const UserMenu = require('../models/userMenuModel');
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { jwtSecret, jwtExpiry, refreshSecret, refreshExpiry, bcryptRounds, STATUS } = require('../config');
+const { jwtSecret, jwtExpiry, refreshSecret, refreshExpiry, bcryptRounds, STATUS, appUrl, resetTokenExpiryMs } = require('../config');
+const { sendPasswordResetEmail } = require('../services/emailService');
 const { DEFAULT_USER_PERMISSIONS } = require('../config/permissions');
 const { buildMenuHierarchy } = require('./menuController');
 const getUserId = require('../utils/getUserId');
@@ -217,6 +219,64 @@ const deleteUser = asyncHandler(async (req, res) => {
   res.json({ message: 'OK', data: user });
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  logger.debug('forgotPassword called');
+  const { email } = req.body;
+  logger.info('Password reset requested', { email });
+
+  // Always return success to prevent email enumeration
+  const successResponse = { message: 'OK', data: 'หากอีเมลนี้มีอยู่ในระบบ เราจะส่งลิงก์รีเซ็ตรหัสผ่านให้คุณ' };
+
+  const user = await User.findOne({ email, status: STATUS.ACTIVE });
+  if (!user) {
+    return res.json(successResponse);
+  }
+
+  // Generate a random token and hash it for storage
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  user.resetToken = hashedToken;
+  user.resetTokenExpiry = new Date(Date.now() + resetTokenExpiryMs);
+  await user.save();
+
+  const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
+
+  try {
+    await sendPasswordResetEmail(email, resetUrl, user.first_name);
+  } catch (err) {
+    logger.error('Password reset email failed', { email, error: err.message });
+  }
+
+  res.json(successResponse);
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  logger.debug('resetPassword called');
+  const { token, password } = req.body;
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    resetToken: hashedToken,
+    resetTokenExpiry: { $gt: new Date() },
+    status: STATUS.ACTIVE,
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error('ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว');
+  }
+
+  user.password = await bcrypt.hash(password, bcryptRounds);
+  user.resetToken = null;
+  user.resetTokenExpiry = null;
+  await user.save();
+
+  logger.info('Password reset successful', { email: user.email });
+  res.json({ message: 'OK', data: 'รีเซ็ตรหัสผ่านสำเร็จ' });
+});
+
 module.exports = {
   login,
   refreshToken,
@@ -227,4 +287,6 @@ module.exports = {
   getUser,
   getMe,
   updateMe,
+  forgotPassword,
+  resetPassword,
 };

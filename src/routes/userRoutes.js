@@ -10,6 +10,8 @@ const {
   getUser,
   getMe,
   updateMe,
+  forgotPassword,
+  resetPassword,
 } = require('../controllers/userController');
 const { userCheckToken, verifyToken } = require('../middleware/authorization');
 const { checkPermission } = require('../middleware/checkPermission');
@@ -20,6 +22,8 @@ const {
   updateUserSchema,
   checkTokenSchema,
   refreshTokenSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } = require('../validations/userValidation');
 const { authRateLimitMax, rateLimitWindowMs } = require('../config');
 
@@ -38,11 +42,13 @@ router.post('/login', authLimiter, validate(loginSchema), login);
 router.post('/refresh', validate(refreshTokenSchema), refreshToken);
 router.post('/token', validate(checkTokenSchema), userCheckToken);
 router.post('/register', authLimiter, validate(registerSchema), createUser);
+router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), forgotPassword);
+router.post('/reset-password', authLimiter, validate(resetPasswordSchema), resetPassword);
 
 // All routes below require authentication
 router.use(verifyToken);
 
-router.route('/').get(getUsers);
+router.route('/').get(checkPermission('users:read'), getUsers);
 
 // Profile routes (current user from JWT)
 router.route('/me').get(getMe).put(validate(updateUserSchema), updateMe);

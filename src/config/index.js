@@ -13,6 +13,10 @@ const QUERY_LIMITS = {
   deviceLogs: 50,
   onlineHistory: 100,
   adminUsersMax: 100,
+  adminDevicesMax: 100,
+  adminSensorsMax: 100,
+  adminNotificationsMax: 100,
+  adminDeviceLogsMax: 100,
 };
 
 /** Weather cache cleanup interval (ms) */
@@ -38,6 +42,10 @@ module.exports = {
     'device/+/checkin',
     'device/+/will',
   ],
+  resendApiKey: process.env.RESEND_API_KEY,
+  resendFrom: process.env.RESEND_FROM || 'SmartFarm <onboarding@resend.dev>',
+  appUrl: process.env.APP_URL || 'http://localhost:5173',
+  resetTokenExpiryMs: 60 * 60 * 1000, // 1 hour
   corsOrigin: process.env.FRONTEND,
   bodyLimit: '10mb',
   sensorDataTTL: 90 * 24 * 60 * 60, // 90 days in seconds
@@ -51,7 +59,14 @@ module.exports = {
   WEATHER_CACHE_CLEANUP_MS,
 };
 
-// Startup warning for missing security config
+// Startup warnings for missing config
+if (!process.env.RESEND_API_KEY) {
+  console.warn(
+    '[WARN] RESEND_API_KEY is not set — password reset emails will not be sent. ' +
+    'Set RESEND_API_KEY in .env for production.'
+  );
+}
+
 if (!process.env.REFRESH_TOKEN_KEY) {
   console.warn(
     '[WARN] REFRESH_TOKEN_KEY is not set — using TOKEN_KEY + "_refresh" as fallback. ' +

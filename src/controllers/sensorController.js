@@ -1,4 +1,5 @@
 const Sensor = require('../models/sensorModel');
+const Device = require('../models/deviceModel');
 const asyncHandler = require('express-async-handler');
 const logger = require('../config/logger');
 const { STATUS } = require('../config');
@@ -6,7 +7,17 @@ const { normalizeStatus } = require('../utils/pagination');
 
 const getSensors = asyncHandler(async (req, res) => {
   logger.debug('getSensors called');
-  const sensors = await Sensor.find({ status: STATUS.ACTIVE });
+  const { role, userId } = req.User_name;
+
+  // Admin sees all sensors; regular users only see sensors belonging to their devices
+  if (role === 'admin') {
+    const sensors = await Sensor.find({ status: STATUS.ACTIVE });
+    return res.json({ message: 'OK', data: sensors });
+  }
+
+  const userDevices = await Device.find({ user_id: userId, status: STATUS.ACTIVE }).select('device_id');
+  const deviceIds = userDevices.map((d) => d.device_id);
+  const sensors = await Sensor.find({ device_id: { $in: deviceIds }, status: STATUS.ACTIVE });
   res.json({ message: 'OK', data: sensors });
 });
 

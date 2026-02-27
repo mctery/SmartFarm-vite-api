@@ -20,10 +20,21 @@ const MENU_SEED = [
   { key: 'about', name: 'About', path: '/about', icon: 'Info', order: 3, parent_key: null },
   { key: 'help', name: 'Help', path: '/help', icon: 'Help', order: 4, parent_key: null },
   { key: 'admin', name: 'Admin', path: '/admin', icon: 'AdminPanelSettings', order: 100, parent_key: null },
-  { key: 'admin_users', name: 'User Management', path: '/admin/users', icon: 'People', order: 1, parent_key: 'admin' },
+  { key: 'admin_dashboard', name: 'ภาพรวม', path: '/admin/dashboard', icon: 'BarChart', order: 1, parent_key: 'admin' },
+  { key: 'admin_users', name: 'จัดการผู้ใช้', path: '/admin/users', icon: 'People', order: 2, parent_key: 'admin' },
+  { key: 'admin_devices', name: 'จัดการอุปกรณ์', path: '/admin/devices', icon: 'Devices', order: 3, parent_key: 'admin' },
+  { key: 'admin_sensors', name: 'จัดการเซ็นเซอร์', path: '/admin/sensors', icon: 'Sensors', order: 4, parent_key: 'admin' },
+  { key: 'admin_audit_logs', name: 'ล็อกการตรวจสอบ', path: '/admin/audit-logs', icon: 'Assignment', order: 5, parent_key: 'admin' },
+  { key: 'admin_device_logs', name: 'ล็อกอุปกรณ์', path: '/admin/device-logs', icon: 'ListAlt', order: 6, parent_key: 'admin' },
+  { key: 'admin_notifications', name: 'การแจ้งเตือน', path: '/admin/notifications', icon: 'Notifications', order: 7, parent_key: 'admin' },
+  { key: 'admin_menus', name: 'จัดการเมนู', path: '/admin/menus', icon: 'MenuBook', order: 8, parent_key: 'admin' },
+  { key: 'admin_settings', name: 'ตั้งค่าระบบ', path: '/admin/settings', icon: 'Settings', order: 9, parent_key: 'admin' },
 ];
 
-const ADMIN_ONLY_KEYS = ['admin', 'admin_users'];
+const ADMIN_ONLY_KEYS = [
+  'admin', 'admin_dashboard', 'admin_users', 'admin_devices', 'admin_sensors',
+  'admin_audit_logs', 'admin_device_logs', 'admin_notifications', 'admin_menus', 'admin_settings',
+];
 
 async function migrate() {
   await mongoose.connect(mongoUrl);
@@ -49,7 +60,18 @@ async function migrate() {
       menusCreated++;
       console.log(`  Created menu: ${seed.key}`);
     } else {
-      console.log(`  Skipped (exists): ${seed.key}`);
+      // Update existing menu if name/icon/order changed
+      let updated = false;
+      if (menu.name !== seed.name) { menu.name = seed.name; updated = true; }
+      if (menu.icon !== seed.icon) { menu.icon = seed.icon; updated = true; }
+      if (menu.order !== seed.order) { menu.order = seed.order; updated = true; }
+      if (menu.path !== seed.path) { menu.path = seed.path; updated = true; }
+      if (updated) {
+        await menu.save();
+        console.log(`  Updated menu: ${seed.key}`);
+      } else {
+        console.log(`  Skipped (up-to-date): ${seed.key}`);
+      }
     }
     menuMap.set(seed.key, menu);
   }
@@ -74,23 +96,35 @@ async function migrate() {
     .filter(([key]) => !ADMIN_ONLY_KEYS.includes(key))
     .map(([, menu]) => menu._id);
 
-  // 3. Create UserMenu documents for all existing active users
+  // 3. Create or update UserMenu documents for all existing active users
   const allUsers = await User.find({ status: 'A' });
   let userMenusCreated = 0;
+  let userMenusUpdated = 0;
 
   for (const user of allUsers) {
     const userId = String(user.user_id || user._id);
+    const targetMenuIds = user.role === 'admin' ? allMenuIds : regularMenuIds;
     const existing = await UserMenu.findOne({ user_id: userId });
+
     if (!existing) {
-      const menuIds = user.role === 'admin' ? allMenuIds : regularMenuIds;
-      await UserMenu.create({ user_id: userId, menu_ids: menuIds });
+      await UserMenu.create({ user_id: userId, menu_ids: targetMenuIds });
       userMenusCreated++;
-      console.log(`  Created UserMenu for user: ${userId} (${user.role}) with ${menuIds.length} menus`);
+      console.log(`  Created UserMenu for user: ${userId} (${user.role}) with ${targetMenuIds.length} menus`);
     } else {
-      console.log(`  Skipped UserMenu (exists): ${userId}`);
+      // Add any new menus that are missing from existing UserMenu
+      const existingIds = existing.menu_ids.map(id => id.toString());
+      const newIds = targetMenuIds.filter(id => !existingIds.includes(id.toString()));
+      if (newIds.length > 0) {
+        existing.menu_ids = [...existing.menu_ids, ...newIds];
+        await existing.save();
+        userMenusUpdated++;
+        console.log(`  Updated UserMenu for user: ${userId} — added ${newIds.length} new menus`);
+      } else {
+        console.log(`  Skipped UserMenu (up-to-date): ${userId}`);
+      }
     }
   }
-  console.log(`Created ${userMenusCreated} new UserMenu documents`);
+  console.log(`Created ${userMenusCreated}, updated ${userMenusUpdated} UserMenu documents`);
 
   await mongoose.disconnect();
   console.log('Migration complete');
